@@ -5,6 +5,7 @@ WORKDIR /app
 # Install system dependencies (FFmpeg is critical)
 RUN apt-get update && apt-get install -y \
     ffmpeg \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY backend/requirements.txt .
