@@ -24,6 +24,14 @@ async def process_video(
     """
     Creates a new project and triggers the video processing background task.
     """
+    # 0. Ensure user exists (auto-create if first time)
+    result = await db.execute(select(User).where(User.clerk_id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        user = User(clerk_id=user_id, email=f"{user_id}@temp.com")  # Placeholder email
+        db.add(user)
+        await db.commit()
+    
     # 1. Create Project in DB
     new_project = Project(
         user_id=user_id,
