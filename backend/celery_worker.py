@@ -17,7 +17,7 @@ celery_app.conf.update(
 )
 
 # Import tasks here to ensure they are registered
-# from services.processor import process_video_task
+from services.processor import process_video_task
 
 @celery_app.task(name="health_check_task")
 def health_check_task():
