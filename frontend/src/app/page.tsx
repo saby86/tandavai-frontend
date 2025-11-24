@@ -2,8 +2,25 @@
 import React from "react";
 import { BackgroundBeams } from "@/components/ui/background-beams";
 import Link from "next/link";
+import { useAuth } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
 export default function LandingPage() {
+    const { isSignedIn, isLoaded } = useAuth();
+    const router = useRouter();
+
+    // Redirect to dashboard if already signed in
+    React.useEffect(() => {
+        if (isLoaded && isSignedIn) {
+            router.push("/dashboard");
+        }
+    }, [isLoaded, isSignedIn, router]);
+
+    // Show loading while checking auth
+    if (!isLoaded) {
+        return null;
+    }
+
     return (
         <div className="h-screen w-full rounded-md bg-neutral-950 relative flex flex-col items-center justify-center antialiased">
             <div className="max-w-2xl mx-auto p-4">
