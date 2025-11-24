@@ -16,7 +16,7 @@ class ViralSegment(typing_extensions.TypedDict):
 
 class GeminiService:
     def __init__(self):
-        self.model = genai.GenerativeModel('gemini-1.5-pro-latest') # Using 1.5 Pro as 3 is not public in SDK yet or use 'gemini-pro-vision'
+        self.model = genai.GenerativeModel('gemini-1.5-pro')
 
     async def analyze_video(self, video_path: str) -> list[ViralSegment]:
         """
