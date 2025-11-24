@@ -18,18 +18,12 @@ async def process_video_logic(project_id: str):
         await db.commit()
 
         try:
-            # 1. Download Video
-            # For MVP, we assume local R2 or download it
-            # Since we are in docker, we might need to download from R2 URL
-            # But R2Service generates presigned PUT. We need GET.
-            
-            # Construct public URL
-            source_url = r2_service.get_public_url(project.source_url)
+            # 1. Download Video from R2
             local_filename = f"/tmp/{project.source_url.split('/')[-1]}"
             os.makedirs(os.path.dirname(local_filename), exist_ok=True)
             
-            # Download (using requests or boto3)
-            print(f"Downloading {source_url} to {local_filename}")
+            # Download using S3 API (not public URL)
+            print(f"Downloading {project.source_url} from R2 to {local_filename}")
             r2_service.s3_client.download_file(r2_service.bucket_name, project.source_url, local_filename)
 
             # 2. Analyze with Gemini
