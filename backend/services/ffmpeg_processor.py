@@ -7,26 +7,19 @@ class FFmpegProcessor:
         Cuts a segment, crops to 9:16, and saves it.
         """
         try:
-            # Convert timestamps MM:SS to seconds if needed, but ffmpeg handles MM:SS
-            
-            stream = ffmpeg.input(input_path, ss=start_time, to=end_time)
-            
-            # Crop to 9:16 (Vertical)
-            # Assuming 1080p input (1920x1080), we want 608x1080 centered
-            # Or just crop center
-            stream = ffmpeg.crop(stream, '(iw-ih*9/16)/2', 0, 'ih*9/16', 'ih')
-            
-            # Scale to standard vertical resolution if needed (e.g. 1080x1920) - skipping for MVP simplicity
-            
-            # Audio Normalization (Loudnorm)
-            audio = stream.audio.filter('loudnorm', I=-14, TP=-1)
-            
-            stream = ffmpeg.output(stream, audio, output_path)
-            ffmpeg.run(stream, overwrite_output=True)
+            # Simple approach: use FFmpeg command line directly to avoid filter graph issues
+            stream = (
+                ffmpeg
+                .input(input_path, ss=start_time, to=end_time)
+                .filter('crop', '(iw-ih*9/16)/2', 0, 'ih*9/16', 'ih')
+                .filter('loudnorm', I=-14, TP=-1)
+                .output(output_path, vcodec='libx264', acodec='aac')
+            )
+            ffmpeg.run(stream, overwrite_output=True, capture_stdout=True, capture_stderr=True)
             
             return output_path
         except ffmpeg.Error as e:
-            print(f"FFmpeg error: {e.stderr.decode('utf8')}")
+            print(f"FFmpeg error: {e.stderr.decode('utf8') if e.stderr else 'Unknown error'}")
             raise e
 
 ffmpeg_processor = FFmpegProcessor()
