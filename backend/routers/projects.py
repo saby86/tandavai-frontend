@@ -60,3 +60,38 @@ async def list_projects(
     result = await db.execute(select(Project).where(Project.user_id == user_id).order_by(Project.created_at.desc()))
     projects = result.scalars().all()
     return projects
+
+@router.get("/projects/{project_id}/clips", response_model=list)
+async def get_project_clips(
+    project_id: str,
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user)
+):
+    """
+    Get all clips for a specific project.
+    Only returns clips if the project belongs to the current user.
+    """
+    from models import Clip
+    from schemas import ClipResponse
+    
+    # Verify project ownership
+    result = await db.execute(
+        select(Project).where(
+            Project.id == project_id,
+            Project.user_id == user_id
+        )
+    )
+    project = result.scalar_one_or_none()
+    
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Fetch clips
+    result = await db.execute(
+        select(Clip)
+        .where(Clip.project_id == project_id)
+        .order_by(Clip.created_at.asc())
+    )
+    clips = result.scalars().all()
+    
+    return clips
