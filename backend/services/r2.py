@@ -7,7 +7,7 @@ class R2Service:
     def __init__(self):
         self.s3_client = boto3.client(
             's3',
-            endpoint_url=settings.R2_PUBLIC_ENDPOINT.replace('/' + settings.R2_BUCKET_NAME, '') if settings.R2_PUBLIC_ENDPOINT else f"https://{settings.R2_ACCOUNT_ID}.r2.cloudflarestorage.com",
+            endpoint_url=f"https://{settings.R2_ACCOUNT_ID}.r2.cloudflarestorage.com",
             aws_access_key_id=settings.R2_ACCESS_KEY_ID,
             aws_secret_access_key=settings.R2_SECRET_ACCESS_KEY,
             config=Config(signature_version='s3v4'),
