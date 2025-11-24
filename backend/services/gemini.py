@@ -16,9 +16,8 @@ class ViralSegment(typing_extensions.TypedDict):
 
 class GeminiService:
     def __init__(self):
-        # Use gemini-1.5-flash for video analysis (supports multimodal including video)
-        # Using the full model path format
-        self.model = genai.GenerativeModel('models/gemini-1.5-flash')
+        # Use gemini-2.5-flash (confirmed available in API key)
+        self.model = genai.GenerativeModel('gemini-2.5-flash')
 
     async def analyze_video(self, video_path: str) -> list[ViralSegment]:
         """
