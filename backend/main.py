@@ -7,10 +7,7 @@ from routers import upload, projects
 app = FastAPI(title=settings.PROJECT_NAME)
 
 # CORS Configuration
-origins = [
-    "http://localhost:3000",
-    "http://localhost",
-]
+origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
