@@ -11,7 +11,7 @@ class FFmpegProcessor:
             stream = (
                 ffmpeg
                 .input(input_path, ss=start_time, to=end_time)
-                .filter('crop', '(iw-ih*9/16)/2', 0, 'ih*9/16', 'ih')
+                .filter('crop', 'ih*9/16', 'ih', '(iw-ow)/2', 0)
                 .filter('loudnorm', I=-14, TP=-1)
                 .output(output_path, vcodec='libx264', acodec='aac')
             )
