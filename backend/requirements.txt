@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+sqlalchemy[asyncio]
+asyncpg
+pydantic-settings
+celery[redis]
+python-multipart
+boto3
+google-generativeai
+ffmpeg-python
+python-jose[cryptography]
+httpx
+psycopg2-binary
