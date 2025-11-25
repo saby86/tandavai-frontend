@@ -44,9 +44,9 @@ export const UploadDropzone = () => {
             queryClient.invalidateQueries({ queryKey: ["projects"] });
             router.push("/dashboard");
 
-        } catch (error) {
+        } catch (error: any) {
             console.error("Upload failed:", error);
-            alert("Upload failed. Please try again.");
+            alert(`Upload failed: ${error.message || "Unknown error"}`);
         } finally {
             setUploading(false);
         }
