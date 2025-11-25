@@ -33,3 +33,10 @@ export const deleteProject = async (projectId: string) => {
     const response = await api.delete(`/projects/${projectId}`);
     return response.data;
 };
+
+export const deleteOldProjects = async (days: number) => {
+    const response = await api.delete("/projects", {
+        params: { older_than_days: days }
+    });
+    return response.data;
+};

@@ -194,3 +194,68 @@ async def delete_project(project_id: str, db: AsyncSession = Depends(get_db)):
     await db.commit()
     
     return {"message": "Project deleted successfully"}
+
+@router.delete("/projects")
+async def delete_old_projects(
+    older_than_days: int, 
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user)
+):
+    """
+    Bulk delete projects older than X days.
+    """
+    from datetime import datetime, timedelta, timezone
+    
+    cutoff_date = datetime.now(timezone.utc) - timedelta(days=older_than_days)
+    
+    # 1. Fetch matching projects
+    result = await db.execute(
+        select(Project)
+        .options(selectinload(Project.clips))
+        .where(
+            Project.user_id == user_id,
+            Project.created_at < cutoff_date
+        )
+    )
+    projects = result.scalars().all()
+    
+    if not projects:
+        return {"message": "No projects found to delete", "count": 0}
+        
+    from services.r2 import r2_service
+    deleted_count = 0
+    
+    for project in projects:
+        try:
+            # Delete Source
+            if project.source_url:
+                try:
+                    if project.source_url.startswith("http"):
+                         # Heuristic for full URL
+                         r2_service.delete_file(project.source_url) # Might fail if it expects key
+                    else:
+                        r2_service.delete_file(project.source_url)
+                except:
+                    pass
+
+            # Delete Clips
+            for clip in project.clips:
+                try:
+                    parts = clip.s3_url.split('/')
+                    if "clips" in parts:
+                        index = parts.index("clips")
+                        s3_key = "/".join(parts[index:])
+                        r2_service.delete_file(s3_key)
+                    else:
+                        r2_service.delete_file(parts[-1])
+                except:
+                    pass
+            
+            await db.delete(project)
+            deleted_count += 1
+            
+        except Exception as e:
+            print(f"Error deleting project {project.id}: {e}")
+            
+    await db.commit()
+    return {"message": f"Deleted {deleted_count} projects", "count": deleted_count}

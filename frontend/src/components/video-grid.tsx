@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api, deleteProject } from "@/lib/api";
+import { api, deleteProject, deleteOldProjects } from "@/lib/api";
 import { Loader2, Clock, AlertCircle, ChevronRight, Sparkles, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ClipCard } from "./clip-card";
@@ -60,6 +60,27 @@ export const VideoGrid = () => {
 
     return (
         <div className="space-y-12">
+            {/* Header Actions */}
+            <div className="flex justify-end mb-4">
+                <button
+                    onClick={async () => {
+                        if (confirm("Delete projects older than 7 days?")) {
+                            try {
+                                const res = await deleteOldProjects(7);
+                                alert(res.message);
+                                queryClient.invalidateQueries({ queryKey: ["projects"] });
+                            } catch (e) {
+                                alert("Failed to cleanup.");
+                            }
+                        }
+                    }}
+                    className="text-xs text-neutral-500 hover:text-red-400 transition-colors flex items-center gap-1"
+                >
+                    <Trash2 className="w-3 h-3" />
+                    Cleanup Old Projects (>7 days)
+                </button>
+            </div>
+
             {projects.map((project) => (
                 <ProjectSection key={project.id} project={project} />
             ))}

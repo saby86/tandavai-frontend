@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { Play, Pause, Download, Copy, Check, Wand2, Share2, MoreVertical } from "lucide-react";
+import { Play, Pause, Download, Copy, Check, Wand2, Share2, MoreVertical, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EditModal } from "./edit-modal";
+import { updateClip } from "@/lib/api";
 
 interface ClipCardProps {
     clip: {
@@ -128,12 +129,40 @@ export const ClipCard = ({ clip, index }: ClipCardProps) => {
 
                     {/* Bottom Controls */}
                     <div className="absolute bottom-0 left-0 right-0 p-5 z-10 space-y-4">
-                        {/* Caption Preview */}
-                        {clip.transcript && (
-                            <p className="text-white/90 text-sm font-medium line-clamp-2 drop-shadow-md leading-relaxed">
-                                {clip.transcript}
-                            </p>
-                        )}
+                        {/* Caption Preview (Editable) */}
+                        <div className="relative group/edit">
+                            <textarea
+                                defaultValue={clip.transcript || ""}
+                                onBlur={(e) => {
+                                    const newText = e.target.value;
+                                    if (newText !== clip.transcript) {
+                                        updateClip(clip.id, { transcript: newText });
+                                    }
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        e.currentTarget.blur();
+                                    }
+                                }}
+                                className="w-full bg-transparent text-white/90 text-sm font-medium leading-relaxed resize-none focus:outline-none focus:bg-black/40 rounded p-1 transition-colors border border-transparent focus:border-white/20"
+                                rows={2}
+                            />
+                            <div className="absolute top-0 right-0 opacity-0 group-hover/edit:opacity-100 transition-opacity pointer-events-none">
+                                <span className="text-[10px] text-neutral-400 bg-black/60 px-1 rounded">Click to Edit</span>
+                            </div>
+                        </div>
+
+                        {/* Timestamp */}
+                        <div className="flex items-center gap-1 text-[10px] text-neutral-500 font-medium mt-1">
+                            <Clock className="w-3 h-3" />
+                            {new Date(clip.created_at).toLocaleDateString(undefined, {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: 'numeric'
+                            })}
+                        </div>
 
                         {/* Action Buttons */}
                         <div className="flex items-center gap-2">
