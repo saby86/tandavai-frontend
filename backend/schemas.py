@@ -21,6 +21,7 @@ class UserResponse(UserBase):
 # Project Schemas
 class ProjectCreate(BaseModel):
     source_url: str
+    clip_duration: str = "auto" # "auto", "30s", "60s"
     # Optional: Add brand kit overrides here if needed
 
 class ProjectResponse(BaseModel):

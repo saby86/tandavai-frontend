@@ -19,7 +19,7 @@ class GeminiService:
         # Use gemini-2.5-flash (confirmed available in API key)
         self.model = genai.GenerativeModel('gemini-2.5-flash')
 
-    async def analyze_video(self, video_path: str) -> list[ViralSegment]:
+    async def analyze_video(self, video_path: str, duration_preference: str = "auto") -> list[ViralSegment]:
         """
         Analyzes a video file and returns a list of viral segments.
         """
@@ -39,21 +39,29 @@ class GeminiService:
 
         print(f"Video processing complete. Generating content...")
 
-        prompt = """
+        duration_prompt = ""
+        if duration_preference == "30s":
+            duration_prompt = "Identify segments strictly between 15-30 seconds."
+        elif duration_preference == "60s":
+            duration_prompt = "Identify segments strictly between 45-60 seconds."
+
+        prompt = f"""
         You are a viral content strategist. Analyze this video. 
-        Identify 3 distinct segments (30-60s) that act as standalone viral shorts.
+        Identify 3 distinct segments that act as standalone viral shorts.
+        {duration_prompt}
         
         Trend Match: Extract keywords (e.g., 'Crypto', 'AI') and check if they match high-volume trends.
         
         Output strictly in JSON format with this schema:
         [
-            {
+            {{
                 "start_time": "MM:SS",
                 "end_time": "MM:SS",
                 "virality_score": 85,
                 "explanation": "Why this is viral...",
-                "suggested_caption": " engaging caption..."
-            }
+                "suggested_caption": " engaging caption...",
+                "srt_content": "1\\n00:00:00,000 --> 00:00:02,000\\nHello world... (Full SRT content for this segment)"
+            }}
         ]
         """
 

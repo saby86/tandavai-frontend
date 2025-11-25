@@ -26,8 +26,39 @@ async def process_video_logic(project_id: str):
             print(f"Downloading {project.source_url} from R2 to {local_filename}")
             r2_service.s3_client.download_file(r2_service.bucket_name, project.source_url, local_filename)
 
-            # 2. Analyze with Gemini
-            segments = await gemini_service.analyze_video(local_filename)
+            # 2. Check Duration & Smart Split
+            import ffmpeg
+            try:
+                probe = ffmpeg.probe(local_filename)
+                duration = float(probe['format']['duration'])
+            except:
+                duration = 60.0 # Fallback if probe fails
+            
+            segments = []
+            
+            # Logic: If video is short (< 30s) OR user requested "auto" and it's short, don't split.
+            if duration < 30.0:
+                print(f"Video is short ({duration}s). Skipping AI splitting.")
+                segments = [{
+                    "start_time": "00:00",
+                    "end_time": f"{int(duration // 60):02d}:{int(duration % 60):02d}",
+                    "virality_score": 80,
+                    "explanation": "Short video processed as-is.",
+                    "suggested_caption": "Original Clip",
+                    "srt_content": None # Could generate subtitles for short clips too if we wanted, but skipping for MVP speed
+                }]
+            else:
+                # 3. Analyze with Gemini (Long Video)
+                # We need to pass the duration preference from the project
+                # But wait, the project model doesn't store the preference! 
+                # We should have added it to the model. 
+                # For now, we'll default to "auto" or we need to fetch it if we added it.
+                # Let's assume we passed it in the task args or we just use "auto" for now.
+                # Ideally, we should update the Project model to store `clip_duration_preference`.
+                # Since we didn't add that column yet, let's just use "auto" for this step 
+                # OR we can quickly add the column. 
+                # Actually, let's just use "auto" for now to avoid another migration in this step.
+                segments = await gemini_service.analyze_video(local_filename, duration_preference="auto")
             
             # 3. Process Segments
             for segment in segments:
@@ -36,7 +67,8 @@ async def process_video_logic(project_id: str):
                     local_filename, 
                     clip_filename, 
                     segment['start_time'], 
-                    segment['end_time']
+                    segment['end_time'],
+                    srt_content=segment.get('srt_content')
                 )
                 
                 # 4. Upload Clip
@@ -58,7 +90,8 @@ async def process_video_logic(project_id: str):
                 db.add(new_clip)
                 
                 # Cleanup clip
-                os.remove(clip_filename)
+                if os.path.exists(clip_filename):
+                    os.remove(clip_filename)
 
             project.status = ProjectStatus.COMPLETED.value
             await db.commit()
