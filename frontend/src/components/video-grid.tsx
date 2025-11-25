@@ -77,7 +77,7 @@ export const VideoGrid = () => {
                     className="text-xs text-neutral-500 hover:text-red-400 transition-colors flex items-center gap-1"
                 >
                     <Trash2 className="w-3 h-3" />
-                    Cleanup Old Projects (>7 days)
+                    Cleanup Old Projects (&gt;7 days)
                 </button>
             </div>
 
