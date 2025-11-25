@@ -129,7 +129,7 @@ async def process_video_logic(project_id: str):
             except Exception as commit_error:
                 print(f"Failed to save error status: {commit_error}")
 
-@celery_app.task(name="services.processor.process_video.task")
+@celery_app.task(name="services.processor.process_video_task")
 def process_video_task(project_id: str):
     # Run async logic in sync Celery task
     loop = asyncio.get_event_loop()
