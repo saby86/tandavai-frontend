@@ -16,6 +16,29 @@ export const EditModal = ({ isOpen, onClose, clip }: EditModalProps) => {
     const [activeTab, setActiveTab] = useState<"caption" | "style">("caption");
     const [caption, setCaption] = useState(clip.transcript || "");
 
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleSave = async () => {
+        try {
+            setIsSaving(true);
+            // Dynamically import to avoid circular dependencies if any, or just use the imported function
+            const { updateClip } = await import("@/lib/api");
+            await updateClip(clip.id, { transcript: caption });
+
+            // Close modal
+            onClose();
+
+            // Ideally trigger a refresh of the parent component here
+            // For now, we rely on the user refreshing or optimistic updates if we implemented them
+            window.location.reload(); // Simple refresh to show changes
+        } catch (error) {
+            console.error("Failed to save clip:", error);
+            alert("Failed to save changes. Please try again.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -108,15 +131,26 @@ export const EditModal = ({ isOpen, onClose, clip }: EditModalProps) => {
                     <button
                         onClick={onClose}
                         className="px-4 py-2 text-sm font-medium text-neutral-400 hover:text-white transition-colors"
+                        disabled={isSaving}
                     >
                         Cancel
                     </button>
                     <button
-                        onClick={onClose}
-                        className="px-6 py-2 bg-white text-black rounded-lg text-sm font-bold hover:bg-neutral-200 transition-colors flex items-center gap-2"
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        className="px-6 py-2 bg-white text-black rounded-lg text-sm font-bold hover:bg-neutral-200 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <Check className="w-4 h-4" />
-                        Save Changes
+                        {isSaving ? (
+                            <>
+                                <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                                Saving...
+                            </>
+                        ) : (
+                            <>
+                                <Check className="w-4 h-4" />
+                                Save Changes
+                            </>
+                        )}
                     </button>
                 </div>
             </div>

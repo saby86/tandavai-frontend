@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config import settings
 # Import routers later when they are created
-from routers import upload, projects
+from routers import upload, projects, clips
 
 app = FastAPI(title=settings.PROJECT_NAME)
 
@@ -37,3 +37,4 @@ async def health_check():
 
 app.include_router(upload.router, prefix="/api", tags=["Upload"])
 app.include_router(projects.router, prefix="/api", tags=["Projects"])
+app.include_router(clips.router, prefix="/api", tags=["Clips"])

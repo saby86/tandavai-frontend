@@ -46,6 +46,9 @@ class ClipResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class ClipUpdate(BaseModel):
+    transcript: Optional[str] = None
+
 # Upload Schemas
 class PresignedUrlResponse(BaseModel):
     upload_url: str

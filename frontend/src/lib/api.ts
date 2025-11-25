@@ -15,3 +15,8 @@ api.interceptors.request.use((config) => {
     // }
     return config;
 });
+
+export const updateClip = async (clipId: string, data: { transcript?: string }) => {
+    const response = await api.patch(`/clips/${clipId}`, data);
+    return response.data;
+};
