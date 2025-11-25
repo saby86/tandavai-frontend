@@ -1,9 +1,10 @@
 "use client";
 import React from "react";
-import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { Loader2, Play, Clock, AlertCircle, Download } from "lucide-react";
+import { Loader2, Clock, AlertCircle, ChevronRight, Sparkles } from "lucide-react";
+import { ClipCard } from "./clip-card";
+import { cn } from "@/lib/utils";
 
 interface Project {
     id: string;
@@ -32,39 +33,35 @@ export const VideoGrid = () => {
 
     if (isLoading) {
         return (
-            <div className="flex justify-center p-12">
-                <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+            <div className="flex justify-center p-24">
+                <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
             </div>
         );
     }
 
     if (!projects || projects.length === 0) {
         return (
-            <div className="text-center p-12 text-neutral-500 border border-dashed border-neutral-800 rounded-xl">
-                No projects yet. Upload a video to get started.
+            <div className="text-center p-16 border border-dashed border-neutral-800 rounded-3xl bg-neutral-900/30">
+                <div className="w-16 h-16 bg-neutral-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Sparkles className="h-8 w-8 text-neutral-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-neutral-200 mb-2">No projects yet</h3>
+                <p className="text-neutral-500">Upload a video to start generating viral clips.</p>
             </div>
         );
     }
 
     return (
-        <BentoGrid className="max-w-4xl mx-auto md:auto-rows-[20rem]">
+        <div className="space-y-8">
             {projects.map((project) => (
-                <BentoGridItem
-                    key={project.id}
-                    title={project.status === "COMPLETED" ? "Viral Clips Ready" : "Processing..."}
-                    description={new Date(project.created_at).toLocaleDateString()}
-                    header={<ProjectHeader project={project} />}
-                    className={project.status === "COMPLETED" ? "md:col-span-2" : ""}
-                    icon={<StatusIcon status={project.status} />}
-                />
+                <ProjectSection key={project.id} project={project} />
             ))}
-        </BentoGrid>
+        </div>
     );
 };
 
-const ProjectHeader = ({ project }: { project: Project }) => {
-    // Fetch clips if project is completed
-    const { data: clips } = useQuery<Clip[]>({
+const ProjectSection = ({ project }: { project: Project }) => {
+    const { data: clips, isLoading } = useQuery<Clip[]>({
         queryKey: ["clips", project.id],
         queryFn: async () => {
             const res = await api.get(`/projects/${project.id}/clips`);
@@ -73,66 +70,83 @@ const ProjectHeader = ({ project }: { project: Project }) => {
         enabled: project.status === "COMPLETED",
     });
 
-    if (project.status === "COMPLETED" && clips && clips.length > 0) {
-        return (
-            <div className="flex flex-col gap-2 w-full">
-                {clips.map((clip) => (
-                    <div key={clip.id} className="group relative rounded-lg overflow-hidden bg-neutral-900 border border-neutral-800 hover:border-neutral-700 transition">
-                        <div className="flex items-center justify-between p-3">
-                            <div className="flex items-center gap-3 flex-1">
-                                <Play className="h-5 w-5 text-green-500" />
-                                <div className="flex-1">
-                                    <p className="text-sm font-medium text-neutral-200">
-                                        Clip {clips.indexOf(clip) + 1}
-                                    </p>
-                                    {clip.virality_score && (
-                                        <p className="text-xs text-neutral-500">
-                                            Virality Score: {clip.virality_score}/100
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                            <a
-                                href={clip.s3_url}
-                                download
-                                className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-md text-xs text-neutral-200 transition"
-                            >
-                                <Download className="h-4 w-4" />
-                                Download
-                            </a>
-                        </div>
-                        {clip.transcript && (
-                            <div className="px-3 pb-3">
-                                <p className="text-xs text-neutral-500 line-clamp-2">
-                                    {clip.transcript}
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                ))}
-            </div>
-        );
-    }
-
-    if (project.status === "COMPLETED") {
-        return (
-            <div className="flex flex-1 w-full h-full min-h-[6rem] rounded-xl bg-gradient-to-br from-neutral-900 to-neutral-800 items-center justify-center">
-                <Play className="h-12 w-12 text-white opacity-50" />
-            </div>
-        );
-    }
-
     return (
-        <div className="flex flex-1 w-full h-full min-h-[6rem] rounded-xl bg-neutral-900 animate-pulse"></div>
+        <div className="bg-neutral-950/50 border border-neutral-800 rounded-3xl p-6 md:p-8 transition-all hover:border-neutral-700">
+            <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                    <StatusBadge status={project.status} />
+                    <div>
+                        <h3 className="text-lg font-semibold text-neutral-200">
+                            Project {project.id.slice(0, 8)}
+                        </h3>
+                        <p className="text-sm text-neutral-500">
+                            {new Date(project.created_at).toLocaleDateString(undefined, {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            })}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {project.status === "COMPLETED" && clips && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {clips.map((clip, index) => (
+                        <ClipCard key={clip.id} clip={clip} index={index} />
+                    ))}
+                </div>
+            )}
+
+            {project.status === "PROCESSING" && (
+                <div className="h-64 flex flex-col items-center justify-center text-center border border-dashed border-neutral-800 rounded-2xl bg-neutral-900/20">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-4" />
+                    <p className="text-neutral-300 font-medium">AI is analyzing your video...</p>
+                    <p className="text-sm text-neutral-500 mt-2">This usually takes 2-3 minutes.</p>
+                </div>
+            )}
+
+            {project.status === "FAILED" && (
+                <div className="h-32 flex items-center justify-center text-center border border-dashed border-red-900/30 rounded-2xl bg-red-900/10">
+                    <div className="flex items-center gap-2 text-red-400">
+                        <AlertCircle className="h-5 w-5" />
+                        <span className="font-medium">Processing failed. Please try again.</span>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 };
 
-const StatusIcon = ({ status }: { status: string }) => {
-    switch (status) {
-        case "COMPLETED": return <Play className="h-4 w-4 text-green-500" />;
-        case "PROCESSING": return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
-        case "PENDING": return <Clock className="h-4 w-4 text-yellow-500" />;
-        case "FAILED": return <AlertCircle className="h-4 w-4 text-red-500" />;
-        default: return <Clock className="h-4 w-4 text-neutral-500" />;
-    }
-}
+const StatusBadge = ({ status }: { status: string }) => {
+    const styles = {
+        COMPLETED: "bg-green-500/10 text-green-400 border-green-500/20",
+        PROCESSING: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+        PENDING: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
+        FAILED: "bg-red-500/10 text-red-400 border-red-500/20",
+    };
+
+    const labels = {
+        COMPLETED: "Completed",
+        PROCESSING: "Processing",
+        PENDING: "Queued",
+        FAILED: "Failed",
+    };
+
+    return (
+        <div className={cn(
+            "px-3 py-1 rounded-full text-xs font-medium border flex items-center gap-2",
+            styles[status as keyof typeof styles] || styles.PENDING
+        )}>
+            <div className={cn(
+                "w-1.5 h-1.5 rounded-full",
+                status === "PROCESSING" && "animate-pulse",
+                status === "COMPLETED" ? "bg-green-400" :
+                    status === "PROCESSING" ? "bg-blue-400" :
+                        status === "FAILED" ? "bg-red-400" : "bg-yellow-400"
+            )} />
+            {labels[status as keyof typeof labels] || status}
+        </div>
+    );
+};

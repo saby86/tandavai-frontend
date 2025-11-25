@@ -2,6 +2,7 @@
 import React, { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone"; // Need to install this: npm install react-dropzone
 import { UploadCloud, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -63,25 +64,50 @@ export const UploadDropzone = () => {
     return (
         <div
             {...getRootProps()}
-            className={`
-        border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors
-        ${isDragActive ? "border-blue-500 bg-blue-500/10" : "border-neutral-700 hover:border-neutral-500"}
-        ${uploading ? "opacity-50 cursor-not-allowed" : ""}
-      `}
+            className={cn(
+                "relative group overflow-hidden rounded-3xl border-2 border-dashed p-10 text-center cursor-pointer transition-all duration-300",
+                isDragActive
+                    ? "border-blue-500 bg-blue-500/10 scale-[1.02]"
+                    : "border-neutral-800 hover:border-neutral-600 hover:bg-neutral-900/50",
+                uploading && "opacity-50 cursor-not-allowed pointer-events-none"
+            )}
         >
             <input {...getInputProps()} />
-            <div className="flex flex-col items-center justify-center gap-4">
-                {uploading ? (
-                    <Loader2 className="h-10 w-10 animate-spin text-neutral-400" />
-                ) : (
-                    <UploadCloud className="h-10 w-10 text-neutral-400" />
+
+            {/* Background Glow Effect */}
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+            <div className="relative z-10 flex flex-col items-center justify-center gap-6">
+                <div className={cn(
+                    "w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300",
+                    isDragActive ? "bg-blue-500/20" : "bg-neutral-800 group-hover:bg-neutral-700"
+                )}>
+                    {uploading ? (
+                        <Loader2 className="h-10 w-10 animate-spin text-blue-400" />
+                    ) : (
+                        <UploadCloud className={cn(
+                            "h-10 w-10 transition-colors",
+                            isDragActive ? "text-blue-400" : "text-neutral-400 group-hover:text-neutral-200"
+                        )} />
+                    )}
+                </div>
+
+                <div className="space-y-2">
+                    <p className="text-lg font-semibold text-neutral-200">
+                        {uploading ? "Uploading your video..." : "Upload Video"}
+                    </p>
+                    <p className="text-sm text-neutral-500 max-w-[240px] mx-auto">
+                        {uploading
+                            ? "Please wait while we send your file to the secure cloud."
+                            : "Drag & drop or click to browse. Supports MP4, MOV, AVI."}
+                    </p>
+                </div>
+
+                {!uploading && (
+                    <div className="px-4 py-2 rounded-full bg-neutral-800 text-xs font-medium text-neutral-400 border border-neutral-700">
+                        Max file size: 500MB
+                    </div>
                 )}
-                <div className="text-neutral-200 font-medium">
-                    {uploading ? "Uploading..." : "Click or drag video to upload"}
-                </div>
-                <div className="text-neutral-500 text-sm">
-                    MP4, MOV, AVI (Max 500MB)
-                </div>
             </div>
         </div>
     );
