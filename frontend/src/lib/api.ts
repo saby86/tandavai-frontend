@@ -1,7 +1,19 @@
 import axios from "axios";
 
+const getBaseUrl = () => {
+    let url = process.env.NEXT_PUBLIC_API_URL || "";
+    if (url && !url.startsWith("http")) {
+        url = `https://${url}`;
+    }
+    // Remove trailing slash if present
+    if (url.endsWith("/")) {
+        url = url.slice(0, -1);
+    }
+    return `${url}/api`;
+};
+
 export const api = axios.create({
-    baseURL: `${process.env.NEXT_PUBLIC_API_URL}/api`,
+    baseURL: getBaseUrl(),
     headers: {
         "Content-Type": "application/json",
     },
