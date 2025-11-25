@@ -22,17 +22,51 @@ async def process_video_logic(project_id: str):
             local_filename = f"/tmp/{project.source_url.split('/')[-1]}"
             os.makedirs(os.path.dirname(local_filename), exist_ok=True)
             
+from celery_worker import celery_app
+from services.r2 import r2_service
+from services.gemini import gemini_service
+from services.ffmpeg_processor import ffmpeg_processor
+from database import AsyncSessionLocal
+from models import Project, Clip, ProjectStatus
+import asyncio
+import os
+import uuid
+
+async def process_video_logic(project_id: str):
+    async with AsyncSessionLocal() as db:
+        project = await db.get(Project, project_id)
+        if not project:
+            return
+        
+        project.status = ProjectStatus.PROCESSING.value
+        await db.commit()
+
+        try:
+            # 1. Download Video from R2
+            local_filename = f"/tmp/{project.source_url.split('/')[-1]}"
+            os.makedirs(os.path.dirname(local_filename), exist_ok=True)
+            
             # Download using S3 API (not public URL)
             print(f"Downloading {project.source_url} from R2 to {local_filename}")
             r2_service.s3_client.download_file(r2_service.bucket_name, project.source_url, local_filename)
 
             # 2. Check Duration & Smart Split
             import ffmpeg
+            import shutil
+            
+            if not shutil.which('ffmpeg'):
+                raise Exception("FFmpeg binary not found in system path")
+
             try:
                 probe = ffmpeg.probe(local_filename)
                 duration = float(probe['format']['duration'])
-            except:
-                duration = 60.0 # Fallback if probe fails
+            except ffmpeg.Error as e:
+                print(f"FFmpeg probe failed: {e.stderr.decode('utf8') if e.stderr else str(e)}")
+                # If we can't probe, we might not be able to process, but let's try fallback if it's just metadata issue
+                duration = 60.0 
+            except Exception as e:
+                print(f"Generic probe error: {e}")
+                duration = 60.0
             
             segments = []
             
@@ -45,7 +79,7 @@ async def process_video_logic(project_id: str):
                     "virality_score": 80,
                     "explanation": "Short video processed as-is.",
                     "suggested_caption": "Original Clip",
-                    "srt_content": None # Could generate subtitles for short clips too if we wanted, but skipping for MVP speed
+                    "srt_content": None 
                 }]
             else:
                 # 3. Analyze with Gemini (Long Video)
@@ -60,6 +94,9 @@ async def process_video_logic(project_id: str):
                 # Actually, let's just use "auto" for now to avoid another migration in this step.
                 segments = await gemini_service.analyze_video(local_filename, duration_preference="auto")
             
+            if not segments:
+                raise Exception("No viral segments identified by AI")
+
             # 3. Process Segments
             for segment in segments:
                 clip_filename = f"/tmp/{uuid.uuid4()}.mp4"
@@ -101,12 +138,21 @@ async def process_video_logic(project_id: str):
 
         except Exception as e:
             error_msg = str(e)
+            if not error_msg:
+                error_msg = "Unknown error occurred during processing"
+            
             print(f"Error processing project {project_id}: {error_msg}")
+            
+            # Re-fetch project to ensure session is valid for update
+            # (Though in this simple flow, existing object should be fine unless session rolled back)
             project.status = ProjectStatus.FAILED.value
             project.error_message = error_msg
-            await db.commit()
+            try:
+                await db.commit()
+            except Exception as commit_error:
+                print(f"Failed to save error status: {commit_error}")
 
-@celery_app.task(name="services.processor.process_video_task")
+@celery_app.task(name="services.processor.process_video.task")
 def process_video_task(project_id: str):
     # Run async logic in sync Celery task
     loop = asyncio.get_event_loop()
