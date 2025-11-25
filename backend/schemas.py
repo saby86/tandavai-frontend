@@ -28,6 +28,7 @@ class ProjectResponse(BaseModel):
     user_id: str
     source_url: str
     status: str
+    error_message: Optional[str] = None
     created_at: datetime
 
     class Config:

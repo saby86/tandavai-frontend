@@ -42,6 +42,7 @@ class Project(Base):
     user_id = Column(String, ForeignKey("users.clerk_id", ondelete="CASCADE"))
     source_url = Column(String, nullable=False)
     status = Column(String, default=ProjectStatus.PENDING.value)
+    error_message = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", back_populates="projects")

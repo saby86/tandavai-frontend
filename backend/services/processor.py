@@ -62,8 +62,10 @@ async def process_video_logic(project_id: str):
             os.remove(local_filename)
 
         except Exception as e:
-            print(f"Error processing project {project_id}: {e}")
+            error_msg = str(e)
+            print(f"Error processing project {project_id}: {error_msg}")
             project.status = ProjectStatus.FAILED.value
+            project.error_message = error_msg
             await db.commit()
 
 @celery_app.task(name="services.processor.process_video_task")

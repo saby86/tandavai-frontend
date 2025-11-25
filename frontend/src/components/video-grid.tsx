@@ -3,14 +3,15 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Loader2, Clock, AlertCircle, ChevronRight, Sparkles } from "lucide-react";
-import { ClipCard } from "./clip-card";
 import { cn } from "@/lib/utils";
+import { ClipCard } from "./clip-card";
 
 interface Project {
     id: string;
     status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
     source_url: string;
     created_at: string;
+    error_message?: string;
 }
 
 interface Clip {
@@ -121,11 +122,19 @@ const ProjectSection = ({ project }: { project: Project }) => {
             )}
 
             {project.status === "FAILED" && (
-                <div className="h-40 flex items-center justify-center text-center border border-dashed border-red-900/30 rounded-3xl bg-red-900/5">
-                    <div className="flex items-center gap-3 text-red-400">
+                <div className="h-40 flex flex-col items-center justify-center text-center border border-dashed border-red-900/30 rounded-3xl bg-red-900/5 p-4">
+                    <div className="flex items-center gap-3 text-red-400 mb-2">
                         <AlertCircle className="h-6 w-6" />
-                        <span className="font-medium text-lg">Processing failed. Please try again.</span>
+                        <span className="font-medium text-lg">Processing Failed</span>
                     </div>
+                    {project.error_message && (
+                        <p className="text-xs text-red-400/70 max-w-xs break-words bg-black/20 p-2 rounded">
+                            {project.error_message}
+                        </p>
+                    )}
+                    {!project.error_message && (
+                        <p className="text-sm text-red-400/70">Please try again.</p>
+                    )}
                 </div>
             )}
         </div>
