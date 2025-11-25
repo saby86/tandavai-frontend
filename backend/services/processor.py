@@ -132,5 +132,9 @@ async def process_video_logic(project_id: str):
 @celery_app.task(name="services.processor.process_video_task")
 def process_video_task(project_id: str):
     # Run async logic in sync Celery task
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(process_video_logic(project_id))
+    try:
+        asyncio.run(process_video_logic(project_id))
+    except Exception as e:
+        print(f"Critical error in process_video_task wrapper: {e}")
+        # We can't easily update DB here if the logic failed before DB session, 
+        # but at least we log it to worker output.
