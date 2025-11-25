@@ -46,7 +46,8 @@ export const UploadDropzone = () => {
 
         } catch (error: any) {
             console.error("Upload failed:", error);
-            alert(`Upload failed: ${error.message || "Unknown error"}`);
+            const attemptedUrl = error.config ? `${error.config.baseURL || ''}${error.config.url}` : 'unknown';
+            alert(`Upload failed: ${error.message}\nAttempted: ${attemptedUrl}`);
         } finally {
             setUploading(false);
         }
