@@ -93,4 +93,44 @@ async def get_project_clips(
     )
     clips = result.scalars().all()
     
-    return clips
+    # Generate presigned URLs for each clip
+    # We need to extract the key from the stored URL or assume the stored URL is just the key if we changed that logic.
+    # Currently, processor.py stores the full public URL. We need to extract the key.
+    # URL format: .../bucket_name/clips/filename.mp4 OR .../clips/filename.mp4
+    
+    from services.r2 import r2_service
+    
+    # Create a list of response objects with updated URLs
+    response_clips = []
+    for clip in clips:
+        # Extract key: The key is likely everything after the last slash if we just stored filename, 
+        # but we stored "clips/filename.mp4" in the key during upload.
+        # The s3_url in DB is r2_service.get_public_url(s3_key).
+        # Let's try to extract "clips/..." from the URL.
+        
+        try:
+            # Simple heuristic: split by '/' and take the last two parts if it looks like clips/filename
+            parts = clip.s3_url.split('/')
+            if "clips" in parts:
+                index = parts.index("clips")
+                s3_key = "/".join(parts[index:])
+            else:
+                # Fallback: just take the last part
+                s3_key = parts[-1]
+                
+            presigned_url = r2_service.generate_presigned_get_url(s3_key)
+            
+            # Create a copy or modify the object if it's not attached to session in a way that prevents it
+            # Pydantic from_attributes will read attributes. We can just assign to the object if it's a transient instance from scalars().all()
+            # However, modifying the DB object might be risky if we accidentally commit.
+            # Safer to create a dict or let Pydantic handle it, but we need to override the field.
+            
+            # Since we are returning a list of ClipResponse, we can just modify the object in memory
+            # SQLAlchemy objects returned by all() are mutable.
+            clip.s3_url = presigned_url
+            response_clips.append(clip)
+        except Exception as e:
+            print(f"Error generating presigned URL for clip {clip.id}: {e}")
+            response_clips.append(clip)
+            
+    return response_clips

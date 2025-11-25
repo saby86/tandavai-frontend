@@ -41,6 +41,25 @@ class R2Service:
             print(f"Error generating presigned URL: {e}")
             raise e
 
+    def generate_presigned_get_url(self, s3_key: str, expiration: int = 3600) -> str:
+        """
+        Generates a presigned URL for downloading/viewing a file.
+        """
+        try:
+            response = self.s3_client.generate_presigned_url(
+                'get_object',
+                Params={
+                    'Bucket': self.bucket_name,
+                    'Key': s3_key
+                },
+                ExpiresIn=expiration
+            )
+            return response
+        except Exception as e:
+            print(f"Error generating presigned GET URL: {e}")
+            # Fallback to public URL logic if presigning fails (though unlikely)
+            return self.get_public_url(s3_key)
+
     def get_public_url(self, s3_key: str) -> str:
         """
         Constructs the public URL for an object.

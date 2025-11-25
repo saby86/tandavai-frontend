@@ -41,7 +41,12 @@ async def process_video_logic(project_id: str):
                 
                 # 4. Upload Clip
                 s3_key = f"clips/{os.path.basename(clip_filename)}"
-                r2_service.s3_client.upload_file(clip_filename, r2_service.bucket_name, s3_key)
+                r2_service.s3_client.upload_file(
+                    clip_filename, 
+                    r2_service.bucket_name, 
+                    s3_key,
+                    ExtraArgs={'ContentType': 'video/mp4'}
+                )
                 
                 # 5. Save Clip to DB
                 new_clip = Clip(
