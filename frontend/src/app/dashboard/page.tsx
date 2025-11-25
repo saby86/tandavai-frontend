@@ -2,48 +2,68 @@
 import { UserButton } from "@clerk/nextjs";
 import { UploadDropzone } from "@/components/upload-dropzone";
 import { VideoGrid } from "@/components/video-grid";
-import { BackgroundBeams } from "@/components/ui/background-beams";
 
 export default function DashboardPage() {
     return (
-        <div className="min-h-screen w-full bg-neutral-950 relative flex flex-col items-center antialiased selection:bg-blue-500/30">
-            <div className="max-w-7xl w-full p-6 md:p-12 z-10 space-y-12">
-                <header className="flex justify-between items-center">
-                    <div className="space-y-1">
-                        <h1 className="text-3xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-neutral-500 font-sans tracking-tight">
-                            TandavAI
+        <div className="min-h-screen w-full bg-[#000000] relative flex flex-col items-center antialiased selection:bg-purple-500/30">
+            {/* Ambient Background */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-900/10 rounded-full blur-[120px]" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-900/10 rounded-full blur-[120px]" />
+            </div>
+
+            <div className="max-w-[1600px] w-full p-6 md:p-12 z-10 space-y-16">
+                {/* Header */}
+                <header className="flex justify-between items-center py-4 sticky top-0 z-50 bg-black/50 backdrop-blur-xl border-b border-white/5 -mx-6 px-6 md:-mx-12 md:px-12">
+                    <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
+                            <span className="text-white font-bold text-xl">T</span>
+                        </div>
+                        <h1 className="text-2xl font-bold text-white tracking-tight">
+                            TandavAI <span className="text-neutral-500 font-normal ml-2 text-sm">Studio</span>
                         </h1>
-                        <p className="text-neutral-500 text-sm md:text-base">
-                            Turn long videos into viral shorts in seconds.
-                        </p>
                     </div>
-                    <UserButton afterSignOutUrl="/" />
+                    <div className="flex items-center gap-6">
+                        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 text-xs font-medium text-neutral-400">
+                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                            System Operational
+                        </div>
+                        <UserButton afterSignOutUrl="/" appearance={{
+                            elements: {
+                                avatarBox: "w-10 h-10 border-2 border-white/10 hover:border-white/20 transition-colors"
+                            }
+                        }} />
+                    </div>
                 </header>
 
-                <main className="space-y-16">
-                    {/* Upload Section */}
-                    <section className="max-w-3xl mx-auto w-full space-y-6">
-                        <div className="flex items-center gap-4 mb-6">
-                            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-neutral-800 to-transparent" />
-                            <h2 className="text-sm font-medium text-neutral-500 uppercase tracking-wider">Create New Project</h2>
-                            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-neutral-800 to-transparent" />
+                <main className="space-y-20">
+                    {/* Hero Upload Section */}
+                    <section className="max-w-4xl mx-auto w-full space-y-8 animate-slide-up">
+                        <div className="text-center space-y-4">
+                            <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
+                                Create Viral Magic
+                            </h2>
+                            <p className="text-lg text-neutral-400 max-w-xl mx-auto">
+                                Upload your long-form videos and let our AI craft engaging, viral-ready shorts in minutes.
+                            </p>
                         </div>
                         <UploadDropzone />
                     </section>
 
-                    {/* Projects Section */}
-                    <section className="space-y-6">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-2xl font-semibold text-neutral-200">Your Projects</h2>
-                            <div className="text-sm text-neutral-500">
-                                Auto-refreshing
-                            </div>
+                    {/* Projects Grid */}
+                    <section className="space-y-8 animate-slide-up" style={{ animationDelay: "0.2s" }}>
+                        <div className="flex items-center justify-between border-b border-white/5 pb-6">
+                            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                                Your Projects
+                                <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-xs font-medium text-white/60">
+                                    Auto-Sync
+                                </span>
+                            </h2>
                         </div>
                         <VideoGrid />
                     </section>
                 </main>
             </div>
-            <BackgroundBeams />
         </div>
     );
 }

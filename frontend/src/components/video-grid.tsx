@@ -41,18 +41,24 @@ export const VideoGrid = () => {
 
     if (!projects || projects.length === 0) {
         return (
-            <div className="text-center p-16 border border-dashed border-neutral-800 rounded-3xl bg-neutral-900/30">
-                <div className="w-16 h-16 bg-neutral-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Sparkles className="h-8 w-8 text-neutral-400" />
+            <div className="text-center py-24 px-6 border border-white/5 rounded-[2rem] bg-[#0A0A0A] relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+
+                <div className="relative z-10 flex flex-col items-center">
+                    <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 shadow-xl border border-white/5 group-hover:scale-110 transition-transform duration-500">
+                        <Sparkles className="h-8 w-8 text-purple-400" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-white mb-3">Start Your First Project</h3>
+                    <p className="text-neutral-400 max-w-md mx-auto leading-relaxed">
+                        Upload a video above to let our AI magic generate viral clips for you automatically.
+                    </p>
                 </div>
-                <h3 className="text-xl font-semibold text-neutral-200 mb-2">No projects yet</h3>
-                <p className="text-neutral-500">Upload a video to start generating viral clips.</p>
             </div>
         );
     }
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-12">
             {projects.map((project) => (
                 <ProjectSection key={project.id} project={project} />
             ))}
@@ -71,15 +77,17 @@ const ProjectSection = ({ project }: { project: Project }) => {
     });
 
     return (
-        <div className="bg-neutral-950/50 border border-neutral-800 rounded-3xl p-6 md:p-8 transition-all hover:border-neutral-700">
-            <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-4">
+        <div className="bg-[#0A0A0A] border border-white/5 rounded-[2rem] p-8 md:p-10 transition-all hover:border-white/10 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/5 blur-[100px] rounded-full pointer-events-none" />
+
+            <div className="flex items-center justify-between mb-10 relative z-10">
+                <div className="flex items-center gap-6">
                     <StatusBadge status={project.status} />
                     <div>
-                        <h3 className="text-lg font-semibold text-neutral-200">
+                        <h3 className="text-xl font-bold text-white tracking-tight">
                             Project {project.id.slice(0, 8)}
                         </h3>
-                        <p className="text-sm text-neutral-500">
+                        <p className="text-sm text-neutral-500 font-medium mt-1">
                             {new Date(project.created_at).toLocaleDateString(undefined, {
                                 weekday: 'long',
                                 year: 'numeric',
@@ -92,7 +100,7 @@ const ProjectSection = ({ project }: { project: Project }) => {
             </div>
 
             {project.status === "COMPLETED" && clips && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {clips.map((clip, index) => (
                         <ClipCard key={clip.id} clip={clip} index={index} />
                     ))}
@@ -100,18 +108,23 @@ const ProjectSection = ({ project }: { project: Project }) => {
             )}
 
             {project.status === "PROCESSING" && (
-                <div className="h-64 flex flex-col items-center justify-center text-center border border-dashed border-neutral-800 rounded-2xl bg-neutral-900/20">
-                    <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-4" />
-                    <p className="text-neutral-300 font-medium">AI is analyzing your video...</p>
-                    <p className="text-sm text-neutral-500 mt-2">This usually takes 2-3 minutes.</p>
+                <div className="h-80 flex flex-col items-center justify-center text-center border border-dashed border-white/10 rounded-3xl bg-white/[0.02]">
+                    <div className="relative mb-6">
+                        <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full animate-pulse" />
+                        <Loader2 className="h-10 w-10 animate-spin text-blue-400 relative z-10" />
+                    </div>
+                    <p className="text-white font-semibold text-lg">AI is analyzing your video...</p>
+                    <p className="text-sm text-neutral-500 mt-2 max-w-xs">
+                        We are identifying the most viral moments. This usually takes 2-3 minutes.
+                    </p>
                 </div>
             )}
 
             {project.status === "FAILED" && (
-                <div className="h-32 flex items-center justify-center text-center border border-dashed border-red-900/30 rounded-2xl bg-red-900/10">
-                    <div className="flex items-center gap-2 text-red-400">
-                        <AlertCircle className="h-5 w-5" />
-                        <span className="font-medium">Processing failed. Please try again.</span>
+                <div className="h-40 flex items-center justify-center text-center border border-dashed border-red-900/30 rounded-3xl bg-red-900/5">
+                    <div className="flex items-center gap-3 text-red-400">
+                        <AlertCircle className="h-6 w-6" />
+                        <span className="font-medium text-lg">Processing failed. Please try again.</span>
                     </div>
                 </div>
             )}
