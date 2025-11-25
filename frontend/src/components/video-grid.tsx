@@ -24,6 +24,7 @@ interface Clip {
 }
 
 export const VideoGrid = () => {
+    const queryClient = useQueryClient();
     const { data: projects, isLoading } = useQuery<Project[]>({
         queryKey: ["projects"],
         queryFn: async () => {
