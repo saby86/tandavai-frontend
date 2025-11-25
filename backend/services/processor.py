@@ -22,30 +22,7 @@ async def process_video_logic(project_id: str):
             local_filename = f"/tmp/{project.source_url.split('/')[-1]}"
             os.makedirs(os.path.dirname(local_filename), exist_ok=True)
             
-from celery_worker import celery_app
-from services.r2 import r2_service
-from services.gemini import gemini_service
-from services.ffmpeg_processor import ffmpeg_processor
-from database import AsyncSessionLocal
-from models import Project, Clip, ProjectStatus
-import asyncio
-import os
-import uuid
 
-async def process_video_logic(project_id: str):
-    async with AsyncSessionLocal() as db:
-        project = await db.get(Project, project_id)
-        if not project:
-            return
-        
-        project.status = ProjectStatus.PROCESSING.value
-        await db.commit()
-
-        try:
-            # 1. Download Video from R2
-            local_filename = f"/tmp/{project.source_url.split('/')[-1]}"
-            os.makedirs(os.path.dirname(local_filename), exist_ok=True)
-            
             # Download using S3 API (not public URL)
             print(f"Downloading {project.source_url} from R2 to {local_filename}")
             r2_service.s3_client.download_file(r2_service.bucket_name, project.source_url, local_filename)
