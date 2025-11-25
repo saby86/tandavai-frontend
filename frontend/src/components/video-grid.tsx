@@ -106,9 +106,9 @@ const ProjectSection = ({ project }: { project: Project }) => {
             try {
                 await deleteProject(project.id);
                 queryClient.invalidateQueries({ queryKey: ["projects"] });
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Failed to delete project:", error);
-                alert("Failed to delete project.");
+                alert(`Failed to delete project: ${error.message || "Unknown error"}`);
             }
         }
     };
