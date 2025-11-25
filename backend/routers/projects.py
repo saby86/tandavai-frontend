@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from database import get_db
 from models import Project, User, ProjectStatus
-from schemas import ProjectCreate, ProjectResponse
+from schemas import ProjectCreate, ProjectResponse, ClipResponse
 from celery_worker import celery_app
 import uuid
 
@@ -61,7 +61,7 @@ async def list_projects(
     projects = result.scalars().all()
     return projects
 
-@router.get("/projects/{project_id}/clips", response_model=list)
+@router.get("/projects/{project_id}/clips", response_model=list[ClipResponse])
 async def get_project_clips(
     project_id: str,
     db: AsyncSession = Depends(get_db),
@@ -72,7 +72,6 @@ async def get_project_clips(
     Only returns clips if the project belongs to the current user.
     """
     from models import Clip
-    from schemas import ClipResponse
     
     # Verify project ownership
     result = await db.execute(
