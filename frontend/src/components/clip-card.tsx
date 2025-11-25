@@ -130,7 +130,7 @@ export const ClipCard = ({ clip, index }: ClipCardProps) => {
                     {/* Bottom Controls */}
                     <div className="absolute bottom-0 left-0 right-0 p-5 z-10 space-y-4">
                         {/* Caption Preview (Editable) */}
-                        <div className="relative group/edit">
+                        <div className="relative group/edit" onClick={(e) => e.stopPropagation()}>
                             <textarea
                                 defaultValue={clip.transcript || ""}
                                 onBlur={(e) => {
@@ -154,7 +154,7 @@ export const ClipCard = ({ clip, index }: ClipCardProps) => {
                         </div>
 
                         {/* Timestamp */}
-                        <div className="flex items-center gap-1 text-[10px] text-neutral-500 font-medium mt-1">
+                        <div className="flex items-center gap-1 text-[10px] text-white/60 font-medium mt-1">
                             <Clock className="w-3 h-3" />
                             {new Date(clip.created_at).toLocaleDateString(undefined, {
                                 month: 'short',
