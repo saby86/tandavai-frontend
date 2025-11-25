@@ -1,6 +1,13 @@
 from celery import Celery
 from config import settings
 import asyncio
+import shutil
+
+# Debug: Check for FFmpeg on startup
+ffmpeg_path = shutil.which("ffmpeg")
+print(f"WORKER STARTUP: FFmpeg path detected at: {ffmpeg_path}")
+if not ffmpeg_path:
+    print("WORKER STARTUP: WARNING - FFmpeg NOT FOUND in PATH")
 
 celery_app = Celery(
     "tandavai_worker",
