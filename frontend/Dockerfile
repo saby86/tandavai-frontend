@@ -26,6 +26,9 @@ ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
+RUN echo "Checking build environment variables..."
+RUN printenv | grep NEXT_PUBLIC || echo "No NEXT_PUBLIC variables found"
+
 RUN npm run build
 
 # Production image, copy all the files and run next

@@ -70,8 +70,9 @@ export const VideoGrid = () => {
                                 const res = await deleteOldProjects(7);
                                 alert(res.message);
                                 queryClient.invalidateQueries({ queryKey: ["projects"] });
-                            } catch (e) {
-                                alert("Failed to cleanup.");
+                            } catch (e: any) {
+                                console.error(e);
+                                alert(`Failed to cleanup: ${e.message || "Unknown error"}`);
                             }
                         }
                     }}
