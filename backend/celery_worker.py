@@ -27,12 +27,12 @@ def health_check_task():
 def cleanup_raw_videos():
     """
     Deletes raw video files from R2 that are older than 24 hours.
-    (Implementation placeholder - requires listing objects and checking timestamps)
     """
-    # In a real implementation, we would list objects in R2/S3, check LastModified, and delete.
-    # For MVP, we can skip or just log.
+    from services.r2 import r2_service
     print("Running cleanup task...")
-    return {"status": "cleanup_done"}
+    count = r2_service.cleanup_files(retention_hours=24)
+    print(f"Cleanup complete. Deleted {count} files.")
+    return {"status": "cleanup_done", "deleted_count": count}
 
 celery_app.conf.beat_schedule = {
     "cleanup-every-24-hours": {

@@ -53,4 +53,44 @@ class R2Service:
              # Fallback or internal use
              return f"https://{settings.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/{self.bucket_name}/{s3_key}"
 
+    def cleanup_files(self, retention_hours: int = 24) -> int:
+        """
+        Deletes files older than the specified retention period.
+        Returns the number of files deleted.
+        """
+        from datetime import datetime, timedelta, timezone
+        
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=retention_hours)
+        deleted_count = 0
+        
+        try:
+            # List objects
+            paginator = self.s3_client.get_paginator('list_objects_v2')
+            
+            for page in paginator.paginate(Bucket=self.bucket_name):
+                if 'Contents' not in page:
+                    continue
+                
+                objects_to_delete = []
+                for obj in page['Contents']:
+                    if obj['LastModified'] < cutoff_time:
+                        objects_to_delete.append({'Key': obj['Key']})
+                
+                if objects_to_delete:
+                    # Delete in batches (max 1000 per request)
+                    for i in range(0, len(objects_to_delete), 1000):
+                        batch = objects_to_delete[i:i+1000]
+                        self.s3_client.delete_objects(
+                            Bucket=self.bucket_name,
+                            Delete={'Objects': batch}
+                        )
+                        deleted_count += len(batch)
+                        print(f"Deleted {len(batch)} old files from R2.")
+                        
+            return deleted_count
+            
+        except Exception as e:
+            print(f"Error during R2 cleanup: {e}")
+            return 0
+
 r2_service = R2Service()
