@@ -28,3 +28,8 @@ export const updateClip = async (clipId: string, data: { transcript?: string }) 
     const response = await api.patch(`/clips/${clipId}`, data);
     return response.data;
 };
+
+export const deleteProject = async (projectId: string) => {
+    const response = await api.delete(`/projects/${projectId}`);
+    return response.data;
+};

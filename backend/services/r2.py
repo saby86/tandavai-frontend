@@ -108,8 +108,20 @@ class R2Service:
                         
             return deleted_count
             
+            return deleted_count
+            
         except Exception as e:
             print(f"Error during R2 cleanup: {e}")
             return 0
+
+    def delete_file(self, s3_key: str):
+        """
+        Deletes a single file from R2.
+        """
+        try:
+            self.s3_client.delete_object(Bucket=self.bucket_name, Key=s3_key)
+            print(f"Deleted file from R2: {s3_key}")
+        except Exception as e:
+            print(f"Error deleting file {s3_key}: {e}")
 
 r2_service = R2Service()

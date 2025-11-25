@@ -1,8 +1,8 @@
 "use client";
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
-import { Loader2, Clock, AlertCircle, ChevronRight, Sparkles } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { api, deleteProject } from "@/lib/api";
+import { Loader2, Clock, AlertCircle, ChevronRight, Sparkles, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ClipCard } from "./clip-card";
 
@@ -68,6 +68,7 @@ export const VideoGrid = () => {
 };
 
 const ProjectSection = ({ project }: { project: Project }) => {
+    const queryClient = useQueryClient();
     const { data: clips, isLoading } = useQuery<Clip[]>({
         queryKey: ["clips", project.id],
         queryFn: async () => {
@@ -76,6 +77,18 @@ const ProjectSection = ({ project }: { project: Project }) => {
         },
         enabled: project.status === "COMPLETED",
     });
+
+    const handleDelete = async () => {
+        if (confirm("Are you sure you want to delete this project? This cannot be undone.")) {
+            try {
+                await deleteProject(project.id);
+                queryClient.invalidateQueries({ queryKey: ["projects"] });
+            } catch (error) {
+                console.error("Failed to delete project:", error);
+                alert("Failed to delete project.");
+            }
+        }
+    };
 
     return (
         <div className="bg-[#0A0A0A] border border-white/5 rounded-[2rem] p-8 md:p-10 transition-all hover:border-white/10 relative overflow-hidden">
@@ -88,16 +101,27 @@ const ProjectSection = ({ project }: { project: Project }) => {
                         <h3 className="text-xl font-bold text-white tracking-tight">
                             Project {project.id.slice(0, 8)}
                         </h3>
-                        <p className="text-sm text-neutral-500 font-medium mt-1">
+                        <p className="text-sm text-neutral-500 font-medium mt-1 flex items-center gap-2">
+                            <Clock className="w-3 h-3" />
                             {new Date(project.created_at).toLocaleDateString(undefined, {
-                                weekday: 'long',
+                                weekday: 'short',
                                 year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
+                                month: 'short',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: 'numeric'
                             })}
                         </p>
                     </div>
                 </div>
+
+                <button
+                    onClick={handleDelete}
+                    className="p-2 rounded-full bg-white/5 hover:bg-red-500/10 text-neutral-400 hover:text-red-400 transition-colors"
+                    title="Delete Project"
+                >
+                    <Trash2 className="w-5 h-5" />
+                </button>
             </div>
 
             {project.status === "COMPLETED" && clips && (
