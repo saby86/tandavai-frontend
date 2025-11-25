@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
         ],
     },
     // Ensure the config only contains valid Next.js keys.
+    output: "standalone",
 };
 
 export default nextConfig;
