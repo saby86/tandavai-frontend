@@ -108,7 +108,8 @@ const ProjectSection = ({ project }: { project: Project }) => {
                 queryClient.invalidateQueries({ queryKey: ["projects"] });
             } catch (error: any) {
                 console.error("Failed to delete project:", error);
-                alert(`Failed to delete project: ${error.message || "Unknown error"}`);
+                const attemptedUrl = error.config ? `${error.config.baseURL || ''}${error.config.url}` : 'unknown';
+                alert(`Failed to delete project: ${error.message}\nAttempted: ${attemptedUrl}`);
             }
         }
     };
