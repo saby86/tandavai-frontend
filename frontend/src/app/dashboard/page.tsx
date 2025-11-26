@@ -28,6 +28,18 @@ export default function DashboardPage() {
                             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                             System Operational
                         </div>
+                        <button
+                            onClick={async () => {
+                                if (!confirm("Run Database Migration? Only do this if you see DB errors.")) return;
+                                try {
+                                    await fetch("/api/proxy/admin/migrate", { method: "POST" });
+                                    alert("Migration Started! Check logs or try uploading again.");
+                                } catch (e) { alert("Migration Failed: " + e); }
+                            }}
+                            className="px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium hover:bg-red-500/20 transition-colors"
+                        >
+                            Fix Database
+                        </button>
                         <UserButton afterSignOutUrl="/" appearance={{
                             elements: {
                                 avatarBox: "w-10 h-10 border-2 border-white/10 hover:border-white/20 transition-colors"
