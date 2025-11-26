@@ -140,15 +140,23 @@ async def get_project_clips(
 @router.post("/projects/{project_id}/archive")
 async def delete_project(project_id: str, db: AsyncSession = Depends(get_db)):
     try:
-        # 1. Fetch Project with Clips
-        # Ensure we import Clip to avoid relationship loading errors
+        # 1. Fetch Project (Try with Clips first, fallback to just Project)
         from models import Clip
+        project = None
         
-        result = await db.execute(
-            select(Project).options(selectinload(Project.clips)).where(Project.id == project_id)
-        )
-        project = result.scalars().first()
-        
+        try:
+            result = await db.execute(
+                select(Project).options(selectinload(Project.clips)).where(Project.id == project_id)
+            )
+            project = result.scalars().first()
+        except Exception as e:
+            print(f"Warning: Failed to load project with clips (likely schema mismatch): {e}")
+            # Fallback: Load project without clips
+            result = await db.execute(
+                select(Project).where(Project.id == project_id)
+            )
+            project = result.scalars().first()
+            
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
             
