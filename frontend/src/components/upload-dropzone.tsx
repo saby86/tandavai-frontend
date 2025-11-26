@@ -107,12 +107,16 @@ export const UploadDropzone = () => {
                             "absolute inset-0 rounded-full blur-xl transition-all duration-500",
                             isDragActive ? "bg-blue-500/40" : "bg-purple-500/20 group-hover:bg-purple-500/40"
                         )} />
+                        import {ThunderLoader} from "@/components/ui/thunder-loader";
+
+                        // ... (inside component)
+
                         <div className={cn(
                             "relative w-24 h-24 rounded-full flex items-center justify-center border border-white/10 backdrop-blur-xl transition-all duration-500 shadow-2xl",
                             isDragActive ? "bg-blue-500/20 border-blue-500/50" : "bg-black/40 group-hover:bg-black/60 group-hover:scale-110"
                         )}>
                             {uploading ? (
-                                <Loader2 className="h-10 w-10 animate-spin text-blue-400" />
+                                <ThunderLoader />
                             ) : (
                                 <UploadCloud className={cn(
                                     "h-10 w-10 transition-all duration-500",
@@ -124,11 +128,11 @@ export const UploadDropzone = () => {
 
                     <div className="space-y-3">
                         <h3 className="text-2xl font-bold text-white tracking-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-400 group-hover:to-purple-400 transition-all duration-300">
-                            {uploading ? "Uploading Magic..." : "Upload Your Video"}
+                            {uploading ? "Summoning Tandav Thunder..." : "Upload Your Video"}
                         </h3>
                         <p className="text-neutral-400 text-base max-w-[280px] mx-auto leading-relaxed">
                             {uploading
-                                ? "Sending your masterpiece to the cloud."
+                                ? "Harnessing cosmic energy to process your clip."
                                 : "Drag & drop or click to browse. Supports MP4, MOV, AVI."}
                         </p>
                     </div>
