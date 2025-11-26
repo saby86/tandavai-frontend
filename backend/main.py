@@ -31,9 +31,22 @@ async def startup_event():
         except Exception as e:
             print(f"Migration: Column might already exist or error occurred: {e}")
 
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+import traceback
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    error_msg = f"Global Error: {str(exc)}\n{traceback.format_exc()}"
+    print(error_msg) # Log to stdout
+    return JSONResponse(
+        status_code=500,
+        content={"detail": error_msg, "type": "GlobalCrash"},
+    )
+
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "environment": settings.ENVIRONMENT, "version": "v21-debug-mode"}
+    return {"status": "ok", "environment": settings.ENVIRONMENT, "version": "v22-nuclear-debug"}
 
 @app.post("/admin/migrate")
 async def run_migration():
