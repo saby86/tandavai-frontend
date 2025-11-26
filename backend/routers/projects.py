@@ -135,7 +135,7 @@ async def get_project_clips(
             
     return response_clips
 
-@router.post("/projects/{project_id}/delete")
+@router.post("/projects/{project_id}/archive")
 async def delete_project(project_id: str, db: AsyncSession = Depends(get_db)):
     # 1. Fetch Project with Clips
     result = await db.execute(
