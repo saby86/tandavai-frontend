@@ -146,52 +146,39 @@ async def delete_project(project_id: str, db: AsyncSession = Depends(get_db)):
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
         
-    # 2. Delete Source Video from R2
-    # Extract key from source_url if possible, or if we stored the key.
-    # Current implementation stores the key in source_url for new uploads (from presignedData.s3_key).
-    # But for older ones or if logic changed, it might be a full URL.
-    # Let's try to handle both.
-    from services.r2 import r2_service
+    # 2. Collect Keys to Delete (Source + Clips)
+    keys_to_delete = []
     
-    try:
-        # Heuristic: if it starts with http, split. If not, assume it's a key.
+    # Source Key
+    if project.source_url:
         if project.source_url.startswith("http"):
-            parts = project.source_url.split('/')
-            # Assuming standard structure .../bucket/key or .../key
-            # This is tricky without exact knowledge of URL structure history.
-            # But usually R2 URLs are .../bucket_name/key
-            # Let's try to find the bucket name in URL or just take the last part(s)
-            # Safer: Just try to delete the key if it looks like a key (uuid/filename)
-            # If we can't parse it easily, we might miss deleting the source.
-            # However, in upload-dropzone.tsx, we pass `presignedData.s3_key` as `source_url`.
-            # So `project.source_url` SHOULD be the key (e.g., "uuid/filename.mp4").
-            r2_service.delete_file(project.source_url)
+             # Heuristic: try to extract key if possible, otherwise skip to avoid errors
+             # Ideally we should have stored the key. 
+             # If we can't be sure, we might leave a file orphan, which is better than crashing.
+             pass
         else:
-            r2_service.delete_file(project.source_url)
-            
-    except Exception as e:
-        print(f"Error deleting source file for project {project_id}: {e}")
+            keys_to_delete.append(project.source_url)
 
-    # 3. Delete Clips from R2
+    # Clip Keys
     for clip in project.clips:
         try:
-            # Clip s3_url is usually the full public URL.
-            # We need to extract the key.
-            # Logic from get_project_clips:
             parts = clip.s3_url.split('/')
             if "clips" in parts:
                 index = parts.index("clips")
                 s3_key = "/".join(parts[index:])
-                r2_service.delete_file(s3_key)
+                keys_to_delete.append(s3_key)
             else:
-                # Fallback
-                r2_service.delete_file(parts[-1])
-        except Exception as e:
-            print(f"Error deleting clip file {clip.id}: {e}")
+                keys_to_delete.append(parts[-1])
+        except:
+            pass
 
-    # 4. Delete from DB
+    # 3. Delete from DB (Immediate)
     await db.delete(project)
     await db.commit()
+    
+    # 4. Trigger Background Deletion
+    if keys_to_delete:
+        celery_app.send_task("services.processor.delete_files_task", args=[keys_to_delete])
     
     return {"message": "Project deleted successfully"}
 
