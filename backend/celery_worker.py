@@ -1,26 +1,3 @@
-from celery import Celery
-from config import settings
-import asyncio
-
-celery_app = Celery(
-    "tandavai_worker",
-    broker=settings.REDIS_URL,
-    backend=settings.REDIS_URL
-)
-
-celery_app.conf.update(
-    task_serializer="json",
-    accept_content=["json"],
-    result_serializer="json",
-    timezone="UTC",
-    enable_utc=True,
-)
-
-# Import tasks here to ensure they are registered
-# Import tasks here to ensure they are registered
-# Moved to bottom to avoid circular import with services.processor
-
-@celery_app.task(name="health_check_task")
 def health_check_task():
     return {"status": "ok"}
 

@@ -1,4 +1,4 @@
-from celery_worker import celery_app
+from celery_app import celery_app
 from services.r2 import r2_service
 from services.gemini import gemini_service
 from services.ffmpeg_processor import ffmpeg_processor

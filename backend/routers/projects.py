@@ -6,7 +6,7 @@ from sqlalchemy.orm import selectinload
 from database import get_db
 from models import Project, User, ProjectStatus
 from schemas import ProjectCreate, ProjectResponse, ClipResponse
-from celery_worker import celery_app
+from celery_app import celery_app
 import uuid
 
 router = APIRouter()

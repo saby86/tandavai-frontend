@@ -33,7 +33,7 @@ async def startup_event():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "environment": settings.ENVIRONMENT, "version": "v19-fix-circular-import"}
+    return {"status": "ok", "environment": settings.ENVIRONMENT, "version": "v20-fix-celery-arch"}
 
 @app.post("/admin/migrate")
 async def run_migration():
