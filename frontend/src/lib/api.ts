@@ -2,15 +2,8 @@ import axios from "axios";
 // API Version: v7-archive-path (Force Rebuild)
 
 const getBaseUrl = () => {
-    let url = process.env.NEXT_PUBLIC_API_URL || "";
-    if (url && !url.startsWith("http")) {
-        url = `https://${url}`;
-    }
-    // Remove trailing slash if present
-    if (url.endsWith("/")) {
-        url = url.slice(0, -1);
-    }
-    return `${url}/api`;
+    // Always use the local Next.js proxy to bypass client-side firewalls
+    return "/api/proxy";
 };
 
 export const api = axios.create({
@@ -48,9 +41,8 @@ export const burnClip = async (clipId: string, data: { start_time?: number; end_
 };
 
 export const deleteProject = async (projectId: string) => {
-    // Use Local Proxy to bypass client-side firewall/CORS issues
-    // The Next.js server will handle the actual request to the backend
-    const response = await axios.post(`/api/proxy/archive/${projectId}`, {});
+    // Now going through the generic proxy automatically
+    const response = await api.post(`/projects/${projectId}/archive`, {});
     return response.data;
 };
 
