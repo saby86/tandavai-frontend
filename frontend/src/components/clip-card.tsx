@@ -153,16 +153,7 @@ export const ClipCard = ({ clip, index }: ClipCardProps) => {
                             </div>
                         </div>
 
-                        {/* Timestamp */}
-                        <div className="flex items-center gap-1 text-[10px] text-white/60 font-medium mt-1">
-                            <Clock className="w-3 h-3" />
-                            {new Date(clip.created_at).toLocaleDateString(undefined, {
-                                month: 'short',
-                                day: 'numeric',
-                                hour: 'numeric',
-                                minute: 'numeric'
-                            })}
-                        </div>
+
 
                         {/* Action Buttons */}
                         <div className="flex items-center gap-2">
