@@ -2,7 +2,7 @@ from celery_worker import celery_app
 from services.r2 import r2_service
 from services.gemini import gemini_service
 from services.ffmpeg_processor import ffmpeg_processor
-from database import AsyncSessionLocal, SessionLocal
+from database import AsyncSessionLocal
 from models import Project, Clip, ProjectStatus
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -169,7 +169,7 @@ def burn_subtitles_task(clip_id: str, start_time: float = None, end_time: float 
     """
     
     async def run_async():
-        async with SessionLocal() as db:
+        async with AsyncSessionLocal() as db:
             # 1. Fetch Clip & Project
             result = await db.execute(
                 select(Clip).options(selectinload(Clip.project)).where(Clip.id == clip_id)
