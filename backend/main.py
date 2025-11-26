@@ -33,7 +33,7 @@ async def startup_event():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "environment": settings.ENVIRONMENT, "version": "v8-backend-debug"}
+    return {"status": "ok", "environment": settings.ENVIRONMENT, "version": "v9-fix-import"}
 
 app.include_router(upload.router, prefix="/api", tags=["Upload"])
 app.include_router(projects.router, prefix="/api", tags=["Projects"])

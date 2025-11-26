@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from database import get_db
 from models import Project, User, ProjectStatus
 from schemas import ProjectCreate, ProjectResponse, ClipResponse
