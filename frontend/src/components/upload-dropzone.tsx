@@ -3,6 +3,7 @@ import React, { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { UploadCloud, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ThunderLoader } from "@/components/ui/thunder-loader";
 import { api, createProject } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -107,9 +108,7 @@ export const UploadDropzone = () => {
                             "absolute inset-0 rounded-full blur-xl transition-all duration-500",
                             isDragActive ? "bg-blue-500/40" : "bg-purple-500/20 group-hover:bg-purple-500/40"
                         )} />
-                        import {ThunderLoader} from "@/components/ui/thunder-loader";
 
-                        // ... (inside component)
 
                         <div className={cn(
                             "relative w-24 h-24 rounded-full flex items-center justify-center border border-white/10 backdrop-blur-xl transition-all duration-500 shadow-2xl",
