@@ -33,7 +33,7 @@ async def startup_event():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "environment": settings.ENVIRONMENT, "version": "v11-fix-float"}
+    return {"status": "ok", "environment": settings.ENVIRONMENT, "version": "v12-fix-imports"}
 
 app.include_router(upload.router, prefix="/api", tags=["Upload"])
 app.include_router(projects.router, prefix="/api", tags=["Projects"])
