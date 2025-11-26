@@ -48,7 +48,7 @@ export const deleteProject = async (projectId: string) => {
 };
 
 export const deleteOldProjects = async (days: number) => {
-    const response = await api.delete("/projects", {
+    const response = await api.post("/projects/cleanup", null, {
         params: { older_than_days: days }
     });
     return response.data;

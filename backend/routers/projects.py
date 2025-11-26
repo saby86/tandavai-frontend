@@ -136,12 +136,57 @@ async def get_project_clips(
     return response_clips
 
 @router.post("/projects/{project_id}/delete")
-async def delete_project(project_id: str):
-    # DEBUG: Pure dummy response, no DB connection
-    print(f"DEBUG: Pure dummy delete called for {project_id}")
-    return {"message": "Project deleted successfully (PURE DUMMY)"}
+async def delete_project(project_id: str, db: AsyncSession = Depends(get_db)):
+    # 1. Fetch Project with Clips
+    result = await db.execute(
+        select(Project).options(selectinload(Project.clips)).where(Project.id == project_id)
+    )
+    project = result.scalars().first()
+    
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+        
+    # 2. Collect Keys to Delete (Source + Clips)
+    keys_to_delete = []
+    
+    # Source Key
+    if project.source_url:
+        if project.source_url.startswith("http"):
+             # Heuristic: try to extract key if possible, otherwise skip to avoid errors
+             # Ideally we should have stored the key. 
+             # If we can't be sure, we might leave a file orphan, which is better than crashing.
+             pass
+        else:
+            keys_to_delete.append(project.source_url)
 
-@router.delete("/projects")
+    # Clip Keys
+    for clip in project.clips:
+        try:
+            parts = clip.s3_url.split('/')
+            if "clips" in parts:
+                index = parts.index("clips")
+                s3_key = "/".join(parts[index:])
+                keys_to_delete.append(s3_key)
+            else:
+                keys_to_delete.append(parts[-1])
+        except:
+            pass
+
+    # 3. Delete from DB (Immediate)
+    await db.delete(project)
+    await db.commit()
+    
+    # 4. Trigger Background Deletion
+    if keys_to_delete:
+        try:
+            celery_app.send_task("services.processor.delete_files_task", args=[keys_to_delete])
+        except Exception as e:
+            print(f"Failed to trigger background deletion task: {e}")
+            # Do not crash the request; the project is already deleted from DB.
+    
+    return {"message": "Project deleted successfully"}
+
+@router.post("/projects/cleanup")
 async def delete_old_projects(
     older_than_days: int, 
     db: AsyncSession = Depends(get_db),
