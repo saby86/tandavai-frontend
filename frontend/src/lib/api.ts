@@ -42,7 +42,8 @@ export const updateClip = async (clipId: string, data: { transcript?: string }) 
 };
 
 export const deleteProject = async (projectId: string) => {
-    const response = await api.delete(`/projects/${projectId}`);
+    // Use POST instead of DELETE to avoid firewall/proxy issues
+    const response = await api.post(`/projects/${projectId}/delete`);
     return response.data;
 };
 

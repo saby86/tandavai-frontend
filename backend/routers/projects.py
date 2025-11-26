@@ -135,7 +135,7 @@ async def get_project_clips(
             
     return response_clips
 
-@router.delete("/projects/{project_id}")
+@router.post("/projects/{project_id}/delete")
 async def delete_project(project_id: str):
     # DEBUG: Pure dummy response, no DB connection
     print(f"DEBUG: Pure dummy delete called for {project_id}")
