@@ -43,8 +43,9 @@ export const updateClip = async (clipId: string, data: { transcript?: string }) 
 };
 
 export const deleteProject = async (projectId: string) => {
-    // Use POST to /archive to avoid "delete" keyword blocking
-    const response = await api.post(`/projects/${projectId}/archive`, {});
+    // Use Local Proxy to bypass client-side firewall/CORS issues
+    // The Next.js server will handle the actual request to the backend
+    const response = await axios.post(`/api/proxy/archive/${projectId}`, {});
     return response.data;
 };
 
