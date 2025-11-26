@@ -33,7 +33,7 @@ async def startup_event():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "environment": settings.ENVIRONMENT, "version": "v20-fix-celery-arch"}
+    return {"status": "ok", "environment": settings.ENVIRONMENT, "version": "v21-debug-mode"}
 
 @app.post("/admin/migrate")
 async def run_migration():
@@ -45,6 +45,29 @@ async def run_migration():
         await conn.execute(text("ALTER TABLE clips ADD COLUMN IF NOT EXISTS end_time FLOAT;"))
     
     return {"status": "migration_complete", "message": "Added start_time and end_time columns to clips table."}
+
+@app.get("/debug/celery")
+async def debug_celery():
+    from celery_app import celery_app
+    try:
+        # Send a ping task
+        task = celery_app.send_task("health_check_task")
+        return {"status": "ok", "task_id": task.id, "message": "Celery task queued successfully"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/debug/db")
+async def debug_db():
+    from database import get_db
+    from sqlalchemy import text
+    try:
+        # Check DB connection
+        from database import AsyncSessionLocal
+        async with AsyncSessionLocal() as session:
+            await session.execute(text("SELECT 1"))
+        return {"status": "ok", "message": "Database connection successful"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 app.include_router(upload.router, prefix="/api", tags=["Upload"])
 app.include_router(projects.router, prefix="/api", tags=["Projects"])

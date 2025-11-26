@@ -8,6 +8,12 @@ AsyncSessionLocal = sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False
 )
 
+# Sync Session for Celery or scripts
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+sync_engine = create_engine(settings.DATABASE_URL, echo=True)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
+
 Base = declarative_base()
 
 async def get_db():
