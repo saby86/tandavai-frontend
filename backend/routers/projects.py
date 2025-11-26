@@ -141,6 +141,9 @@ async def get_project_clips(
 async def delete_project(project_id: str, db: AsyncSession = Depends(get_db)):
     try:
         # 1. Fetch Project with Clips
+        # Ensure we import Clip to avoid relationship loading errors
+        from models import Clip
+        
         result = await db.execute(
             select(Project).options(selectinload(Project.clips)).where(Project.id == project_id)
         )
@@ -152,25 +155,29 @@ async def delete_project(project_id: str, db: AsyncSession = Depends(get_db)):
         # 2. Collect Keys to Delete (Source + Clips)
         keys_to_delete = []
         
-        # Source Key
-        if project.source_url:
-            if project.source_url.startswith("http"):
-                 pass
-            else:
-                keys_to_delete.append(project.source_url)
+        try:
+            # Source Key
+            if project.source_url:
+                if not project.source_url.startswith("http"):
+                    keys_to_delete.append(project.source_url)
 
-        # Clip Keys
-        for clip in project.clips:
-            try:
-                parts = clip.s3_url.split('/')
-                if "clips" in parts:
-                    index = parts.index("clips")
-                    s3_key = "/".join(parts[index:])
-                    keys_to_delete.append(s3_key)
-                else:
-                    keys_to_delete.append(parts[-1])
-            except:
-                pass
+            # Clip Keys
+            # Check if clips is populated (it should be due to selectinload)
+            if project.clips:
+                for clip in project.clips:
+                    try:
+                        parts = clip.s3_url.split('/')
+                        if "clips" in parts:
+                            index = parts.index("clips")
+                            s3_key = "/".join(parts[index:])
+                            keys_to_delete.append(s3_key)
+                        else:
+                            keys_to_delete.append(parts[-1])
+                    except:
+                        continue
+        except Exception as e:
+            print(f"Error collecting keys for deletion: {e}")
+            # Continue to DB deletion even if key collection fails
 
         # 3. Delete from DB (Immediate)
         await db.delete(project)
@@ -188,7 +195,6 @@ async def delete_project(project_id: str, db: AsyncSession = Depends(get_db)):
         raise
     except Exception as e:
         print(f"CRITICAL ERROR in delete_project: {e}")
-        # Return 500 but with the actual error message so the proxy can show it
         raise HTTPException(status_code=500, detail=f"Backend Crash: {str(e)}")
 
 @router.post("/projects/cleanup")
@@ -201,6 +207,7 @@ async def delete_old_projects(
     Bulk delete projects older than X days.
     """
     from datetime import datetime, timedelta, timezone
+    from models import Clip
     
     cutoff_date = datetime.now(timezone.utc) - timedelta(days=older_than_days)
     
@@ -218,32 +225,24 @@ async def delete_old_projects(
     if not projects:
         return {"message": "No projects found to delete", "count": 0}
         
-    from services.r2 import r2_service
+    keys_to_delete = []
     deleted_count = 0
     
     for project in projects:
         try:
-            # Delete Source
-            if project.source_url:
-                try:
-                    if project.source_url.startswith("http"):
-                         # Heuristic for full URL
-                         r2_service.delete_file(project.source_url) # Might fail if it expects key
-                    else:
-                        r2_service.delete_file(project.source_url)
-                except:
-                    pass
-
-            # Delete Clips
+            # Collect keys
+            if project.source_url and not project.source_url.startswith("http"):
+                keys_to_delete.append(project.source_url)
+                
             for clip in project.clips:
                 try:
                     parts = clip.s3_url.split('/')
                     if "clips" in parts:
                         index = parts.index("clips")
                         s3_key = "/".join(parts[index:])
-                        r2_service.delete_file(s3_key)
+                        keys_to_delete.append(s3_key)
                     else:
-                        r2_service.delete_file(parts[-1])
+                        keys_to_delete.append(parts[-1])
                 except:
                     pass
             
@@ -254,6 +253,14 @@ async def delete_old_projects(
             print(f"Error deleting project {project.id}: {e}")
             
     await db.commit()
+    
+    # Trigger background deletion for all collected keys
+    if keys_to_delete:
+        try:
+            celery_app.send_task("services.processor.delete_files_task", args=[keys_to_delete])
+        except Exception as e:
+            print(f"Failed to trigger cleanup task: {e}")
+            
     return {"message": f"Deleted {deleted_count} projects", "count": deleted_count}
 
 class BurnRequest(BaseModel):

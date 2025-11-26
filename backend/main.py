@@ -33,7 +33,7 @@ async def startup_event():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "environment": settings.ENVIRONMENT, "version": "v17-db-fix"}
+    return {"status": "ok", "environment": settings.ENVIRONMENT, "version": "v18-fix-delete"}
 
 @app.post("/admin/migrate")
 async def run_migration():
