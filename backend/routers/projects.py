@@ -177,12 +177,12 @@ async def delete_project(project_id: str, db: AsyncSession = Depends(get_db)):
     await db.commit()
     
     # 4. Trigger Background Deletion
-    if keys_to_delete:
-        try:
-            celery_app.send_task("services.processor.delete_files_task", args=[keys_to_delete])
-        except Exception as e:
-            print(f"Failed to trigger background deletion task: {e}")
-            # Do not crash the request; the project is already deleted from DB.
+    # if keys_to_delete:
+    #     try:
+    #         celery_app.send_task("services.processor.delete_files_task", args=[keys_to_delete])
+    #     except Exception as e:
+    #         print(f"Failed to trigger background deletion task: {e}")
+    #         # Do not crash the request; the project is already deleted from DB.
     
     return {"message": "Project deleted successfully"}
 
