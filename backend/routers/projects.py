@@ -136,10 +136,10 @@ async def get_project_clips(
     return response_clips
 
 @router.delete("/projects/{project_id}")
-async def delete_project(project_id: str, db: AsyncSession = Depends(get_db)):
-    # DEBUG: Dummy response to test network connectivity
-    print(f"DEBUG: Dummy delete called for {project_id}")
-    return {"message": "Project deleted successfully (DUMMY)"}
+async def delete_project(project_id: str):
+    # DEBUG: Pure dummy response, no DB connection
+    print(f"DEBUG: Pure dummy delete called for {project_id}")
+    return {"message": "Project deleted successfully (PURE DUMMY)"}
 
 @router.delete("/projects")
 async def delete_old_projects(
