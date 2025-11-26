@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -254,3 +255,37 @@ async def delete_old_projects(
             
     await db.commit()
     return {"message": f"Deleted {deleted_count} projects", "count": deleted_count}
+
+class BurnRequest(BaseModel):
+    start_time: float = None
+    end_time: float = None
+    style_name: str = "Hormozi"
+
+@router.post("/clips/{clip_id}/burn")
+async def burn_clip(
+    clip_id: str, 
+    request: BurnRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Triggers a background task to re-burn subtitles into the clip.
+    Can also update start/end times (Trim) and Style.
+    """
+    # Verify clip exists
+    from models import Clip
+    result = await db.execute(select(Clip).where(Clip.id == clip_id))
+    clip = result.scalar_one_or_none()
+    
+    if not clip:
+        raise HTTPException(status_code=404, detail="Clip not found")
+        
+    # Trigger Task
+    try:
+        celery_app.send_task(
+            "services.processor.burn_subtitles_task", 
+            args=[clip_id, request.start_time, request.end_time, request.style_name]
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to trigger burn task: {e}")
+        
+    return {"message": "Burning started. This may take a few moments."}

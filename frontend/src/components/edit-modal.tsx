@@ -1,7 +1,8 @@
 "use client";
 import React, { useState } from "react";
-import { X, Type, Scissors, Check, Wand2 } from "lucide-react";
+import { X, Type, Scissors, Check, Wand2, Play, Pause } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { burnClip, updateClip } from "@/lib/api";
 
 interface EditModalProps {
     isOpen: boolean;
@@ -9,28 +10,50 @@ interface EditModalProps {
     clip: {
         id: string;
         transcript: string | null;
+        start_time?: number;
+        end_time?: number;
     };
 }
+
+const STYLES = [
+    { name: "Hormozi", label: "Hormozi", color: "bg-yellow-400" },
+    { name: "Classic", label: "Classic", color: "bg-white" },
+    { name: "Minimal", label: "Minimal", color: "bg-neutral-400" },
+    { name: "Neon", label: "Neon", color: "bg-cyan-400" },
+    { name: "Boxed", label: "Boxed", color: "bg-black border border-white" },
+];
 
 export const EditModal = ({ isOpen, onClose, clip }: EditModalProps) => {
     const [activeTab, setActiveTab] = useState<"caption" | "style">("caption");
     const [caption, setCaption] = useState(clip.transcript || "");
+    const [selectedStyle, setSelectedStyle] = useState("Hormozi");
+
+    // Trim State (Mocking defaults if missing)
+    const [startTime, setStartTime] = useState(clip.start_time || 0);
+    const [endTime, setEndTime] = useState(clip.end_time || 30);
 
     const [isSaving, setIsSaving] = useState(false);
 
     const handleSave = async () => {
         try {
             setIsSaving(true);
-            // Dynamically import to avoid circular dependencies if any, or just use the imported function
-            const { updateClip } = await import("@/lib/api");
-            await updateClip(clip.id, { transcript: caption });
 
-            // Close modal
+            // 1. Update Transcript in DB
+            if (caption !== clip.transcript) {
+                await updateClip(clip.id, { transcript: caption });
+            }
+
+            // 2. Trigger Burn (Re-process video)
+            // This handles Style and Trim changes
+            await burnClip(clip.id, {
+                start_time: startTime,
+                end_time: endTime,
+                style_name: selectedStyle
+            });
+
+            alert("Processing started! Your video is being updated in the background.");
             onClose();
-
-            // Ideally trigger a refresh of the parent component here
-            // For now, we rely on the user refreshing or optimistic updates if we implemented them
-            window.location.reload(); // Simple refresh to show changes
+            window.location.reload();
         } catch (error) {
             console.error("Failed to save clip:", error);
             alert("Failed to save changes. Please try again.");
@@ -66,7 +89,12 @@ export const EditModal = ({ isOpen, onClose, clip }: EditModalProps) => {
                             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60" />
                             <p className="text-neutral-500 text-sm">Preview</p>
                             <div className="absolute bottom-8 left-4 right-4 text-center">
-                                <p className="text-white font-bold text-sm drop-shadow-md">{caption}</p>
+                                <p className={cn(
+                                    "font-bold text-sm drop-shadow-md",
+                                    selectedStyle === "Hormozi" ? "text-yellow-400 uppercase" :
+                                        selectedStyle === "Neon" ? "text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.8)]" :
+                                            "text-white"
+                                )}>{caption.slice(0, 50)}...</p>
                             </div>
                         </div>
 
@@ -111,14 +139,54 @@ export const EditModal = ({ isOpen, onClose, clip }: EditModalProps) => {
                                         className="w-full h-40 bg-black/50 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-purple-500/50 transition-colors resize-none"
                                         placeholder="Enter caption text..."
                                     />
-                                    <p className="text-xs text-neutral-500">
-                                        AI generated captions. Edit to correct any mistakes.
-                                    </p>
                                 </div>
                             ) : (
-                                <div className="space-y-4 animate-fade-in">
-                                    <div className="p-4 border border-dashed border-white/10 rounded-xl text-center py-12">
-                                        <p className="text-neutral-500">Style & Trim controls coming soon.</p>
+                                <div className="space-y-6 animate-fade-in">
+                                    {/* Style Selector */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-neutral-400 mb-3">Subtitle Style</label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {STYLES.map((style) => (
+                                                <button
+                                                    key={style.name}
+                                                    onClick={() => setSelectedStyle(style.name)}
+                                                    className={cn(
+                                                        "px-3 py-2 rounded-lg text-sm font-medium border transition-all flex items-center gap-2",
+                                                        selectedStyle === style.name
+                                                            ? "bg-white/10 border-purple-500 text-white"
+                                                            : "bg-black/40 border-white/5 text-neutral-400 hover:bg-white/5"
+                                                    )}
+                                                >
+                                                    <div className={cn("w-3 h-3 rounded-full", style.color)} />
+                                                    {style.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Trim Controls */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-neutral-400 mb-3">Trim Video (Seconds)</label>
+                                        <div className="flex gap-4">
+                                            <div>
+                                                <span className="text-xs text-neutral-500 block mb-1">Start</span>
+                                                <input
+                                                    type="number"
+                                                    value={startTime}
+                                                    onChange={(e) => setStartTime(Number(e.target.value))}
+                                                    className="w-24 bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white text-sm"
+                                                />
+                                            </div>
+                                            <div>
+                                                <span className="text-xs text-neutral-500 block mb-1">End</span>
+                                                <input
+                                                    type="number"
+                                                    value={endTime}
+                                                    onChange={(e) => setEndTime(Number(e.target.value))}
+                                                    className="w-24 bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white text-sm"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -143,12 +211,12 @@ export const EditModal = ({ isOpen, onClose, clip }: EditModalProps) => {
                         {isSaving ? (
                             <>
                                 <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-                                Saving...
+                                Processing...
                             </>
                         ) : (
                             <>
-                                <Check className="w-4 h-4" />
-                                Save Changes
+                                <Wand2 className="w-4 h-4" />
+                                Burn & Save
                             </>
                         )}
                     </button>

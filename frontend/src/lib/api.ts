@@ -42,6 +42,11 @@ export const updateClip = async (clipId: string, data: { transcript?: string }) 
     return response.data;
 };
 
+export const burnClip = async (clipId: string, data: { start_time?: number; end_time?: number; style_name?: string }) => {
+    const response = await api.post(`/clips/${clipId}/burn`, data);
+    return response.data;
+};
+
 export const deleteProject = async (projectId: string) => {
     // Use Local Proxy to bypass client-side firewall/CORS issues
     // The Next.js server will handle the actual request to the backend

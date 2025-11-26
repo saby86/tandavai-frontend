@@ -56,6 +56,8 @@ class Clip(Base):
     s3_url = Column(String, nullable=False)
     virality_score = Column(Integer, nullable=True)
     transcript = Column(Text, nullable=True)
+    start_time = Column(Float, nullable=True) # Seconds
+    end_time = Column(Float, nullable=True)   # Seconds
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     project = relationship("Project", back_populates="clips")

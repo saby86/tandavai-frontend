@@ -65,17 +65,21 @@ export const UploadDropzone = () => {
     return (
         <div className="w-full max-w-xl mx-auto space-y-4">
             {/* Duration Selector */}
-            <div className="flex justify-end">
-                <select
-                    value={clipDuration}
-                    onChange={(e) => setClipDuration(e.target.value)}
-                    className="bg-black/50 border border-white/10 rounded-lg px-3 py-1 text-sm text-neutral-400 focus:outline-none focus:border-purple-500 transition-colors"
-                    disabled={uploading}
-                >
-                    <option value="auto">Auto Duration</option>
-                    <option value="30s">Shorts (30s)</option>
-                    <option value="60s">Longer (60s)</option>
-                </select>
+            <div className="flex justify-end gap-2">
+                {["auto", "30s", "60s"].map((duration) => (
+                    <button
+                        key={duration}
+                        onClick={() => setClipDuration(duration)}
+                        className={cn(
+                            "px-4 py-1.5 rounded-full text-xs font-medium border transition-all",
+                            clipDuration === duration
+                                ? "bg-purple-500 text-white border-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.4)]"
+                                : "bg-white/5 text-neutral-400 border-white/5 hover:border-white/10 hover:text-white"
+                        )}
+                    >
+                        {duration === "auto" ? "Auto" : duration}
+                    </button>
+                ))}
             </div>
 
             <div
