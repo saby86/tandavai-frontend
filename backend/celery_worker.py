@@ -17,7 +17,8 @@ celery_app.conf.update(
 )
 
 # Import tasks here to ensure they are registered
-from services.processor import process_video_task
+# Import tasks here to ensure they are registered
+# Moved to bottom to avoid circular import with services.processor
 
 @celery_app.task(name="health_check_task")
 def health_check_task():
@@ -40,3 +41,6 @@ celery_app.conf.beat_schedule = {
         "schedule": 86400.0, # 24 hours
     },
 }
+
+# Import tasks at the end to avoid circular imports
+from services.processor import process_video_task, delete_files_task, burn_subtitles_task
