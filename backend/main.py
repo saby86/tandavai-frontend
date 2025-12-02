@@ -46,7 +46,7 @@ async def global_exception_handler(request, exc):
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "environment": settings.ENVIRONMENT, "version": "v27-raw-sql-delete"}
+    return {"status": "ok", "environment": settings.ENVIRONMENT, "version": "v28-deep-pipeline-fix"}
 
 @app.post("/admin/migrate")
 async def run_migration():

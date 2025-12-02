@@ -28,11 +28,18 @@ class GeminiService:
         video_file = genai.upload_file(path=video_path)
         
         # Wait for processing
+        # Wait for processing
+        import time
+        max_retries = 30 # 60 seconds total
+        retries = 0
+        
         while video_file.state.name == "PROCESSING":
             print('.', end='')
-            import time
             time.sleep(2)
             video_file = genai.get_file(video_file.name)
+            retries += 1
+            if retries > max_retries:
+                raise TimeoutError("Gemini video processing timed out after 60 seconds")
 
         if video_file.state.name == "FAILED":
             raise ValueError(f"Gemini video processing failed: {video_file.state.name}")

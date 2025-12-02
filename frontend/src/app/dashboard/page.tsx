@@ -25,57 +25,35 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex items-center gap-6">
                         <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 text-xs font-medium text-neutral-400">
-                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                            System Operational
+
+                            <main className="space-y-20">
+                                {/* Hero Upload Section */}
+                                <section className="max-w-4xl mx-auto w-full space-y-8 animate-slide-up">
+                                    <div className="text-center space-y-4">
+                                        <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
+                                            Create Viral Magic
+                                        </h2>
+                                        <p className="text-lg text-neutral-400 max-w-xl mx-auto">
+                                            Upload your long-form videos and let our AI craft engaging, viral-ready shorts in minutes.
+                                        </p>
+                                    </div>
+                                    <UploadDropzone />
+                                </section>
+
+                                {/* Projects Grid */}
+                                <section className="space-y-8 animate-slide-up" style={{ animationDelay: "0.2s" }}>
+                                    <div className="flex items-center justify-between border-b border-white/5 pb-6">
+                                        <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                                            Your Projects
+                                            <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-xs font-medium text-white/60">
+                                                Auto-Sync
+                                            </span>
+                                        </h2>
+                                    </div>
+                                    <VideoGrid />
+                                </section>
+                            </main>
                         </div>
-                        <button
-                            onClick={async () => {
-                                if (!confirm("Run Database Migration? Only do this if you see DB errors.")) return;
-                                try {
-                                    await fetch("/api/proxy/admin/migrate", { method: "POST" });
-                                    alert("Migration Started! Check logs or try uploading again.");
-                                } catch (e) { alert("Migration Failed: " + e); }
-                            }}
-                            className="px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium hover:bg-red-500/20 transition-colors"
-                        >
-                            Fix Database
-                        </button>
-                        <UserButton afterSignOutUrl="/" appearance={{
-                            elements: {
-                                avatarBox: "w-10 h-10 border-2 border-white/10 hover:border-white/20 transition-colors"
-                            }
-                        }} />
                     </div>
-                </header>
-
-                <main className="space-y-20">
-                    {/* Hero Upload Section */}
-                    <section className="max-w-4xl mx-auto w-full space-y-8 animate-slide-up">
-                        <div className="text-center space-y-4">
-                            <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
-                                Create Viral Magic
-                            </h2>
-                            <p className="text-lg text-neutral-400 max-w-xl mx-auto">
-                                Upload your long-form videos and let our AI craft engaging, viral-ready shorts in minutes.
-                            </p>
-                        </div>
-                        <UploadDropzone />
-                    </section>
-
-                    {/* Projects Grid */}
-                    <section className="space-y-8 animate-slide-up" style={{ animationDelay: "0.2s" }}>
-                        <div className="flex items-center justify-between border-b border-white/5 pb-6">
-                            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                                Your Projects
-                                <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-xs font-medium text-white/60">
-                                    Auto-Sync
-                                </span>
-                            </h2>
-                        </div>
-                        <VideoGrid />
-                    </section>
-                </main>
-            </div>
-        </div>
-    );
+                    );
 }

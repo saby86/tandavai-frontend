@@ -317,3 +317,24 @@ async def burn_clip(
         raise HTTPException(status_code=500, detail=f"Failed to trigger burn task: {e}")
         
     return {"message": "Burning started. This may take a few moments."}
+
+@router.post("/admin/reset-stuck")
+async def reset_stuck_projects(db: AsyncSession = Depends(get_db)):
+    """
+    Resets projects stuck in PROCESSING state to FAILED so they can be retried or deleted.
+    """
+    from models import Project, ProjectStatus
+    
+    result = await db.execute(
+        select(Project).where(Project.status == ProjectStatus.PROCESSING.value)
+    )
+    projects = result.scalars().all()
+    
+    count = 0
+    for project in projects:
+        project.status = ProjectStatus.FAILED.value
+        project.error_message = "Reset by admin (stuck in processing)"
+        count += 1
+        
+    await db.commit()
+    return {"message": f"Reset {count} stuck projects to FAILED state."}

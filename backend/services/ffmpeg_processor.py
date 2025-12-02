@@ -8,11 +8,11 @@ class FFmpegProcessor:
         Colors are in &HBBGGRR format (Hex).
         """
         styles = {
-            "Hormozi": "Fontname=Arial,FontSize=24,PrimaryColour=&H0000FFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=2,Shadow=0,MarginV=25,Bold=1,Alignment=2",  # Yellow Text, Black Outline
-            "Classic": "Fontname=Arial,FontSize=24,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=1,Shadow=0,MarginV=20,Alignment=2",      # White Text, Black Outline
-            "Minimal": "Fontname=Arial,FontSize=16,PrimaryColour=&H00DDDDDD,OutlineColour=&H80000000,BorderStyle=1,Outline=0,Shadow=0,MarginV=15,Alignment=2",      # Grey Text, Subtle
-            "Neon":    "Fontname=Arial,FontSize=26,PrimaryColour=&H00FFFF00,OutlineColour=&H00FF00FF,BorderStyle=1,Outline=2,Shadow=0,MarginV=25,Bold=1,Alignment=2",  # Cyan Text, Pink Outline
-            "Boxed":   "Fontname=Arial,FontSize=24,PrimaryColour=&H00FFFFFF,BackColour=&H80000000,BorderStyle=3,Outline=0,Shadow=0,MarginV=20,Alignment=2",          # White Text, Black Box
+            "Hormozi": "Fontname=Liberation Sans,FontSize=24,PrimaryColour=&H0000FFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=2,Shadow=0,MarginV=25,Bold=1,Alignment=2",  # Yellow Text, Black Outline
+            "Classic": "Fontname=Liberation Sans,FontSize=24,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=1,Shadow=0,MarginV=20,Alignment=2",      # White Text, Black Outline
+            "Minimal": "Fontname=Liberation Sans,FontSize=16,PrimaryColour=&H00DDDDDD,OutlineColour=&H80000000,BorderStyle=1,Outline=0,Shadow=0,MarginV=15,Alignment=2",      # Grey Text, Subtle
+            "Neon":    "Fontname=Liberation Sans,FontSize=26,PrimaryColour=&H00FFFF00,OutlineColour=&H00FF00FF,BorderStyle=1,Outline=2,Shadow=0,MarginV=25,Bold=1,Alignment=2",  # Cyan Text, Pink Outline
+            "Boxed":   "Fontname=Liberation Sans,FontSize=24,PrimaryColour=&H00FFFFFF,BackColour=&H80000000,BorderStyle=3,Outline=0,Shadow=0,MarginV=20,Alignment=2",          # White Text, Black Box
         }
         return styles.get(style_name, styles["Hormozi"])
 
