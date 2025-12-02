@@ -108,8 +108,6 @@ class R2Service:
                         
             return deleted_count
             
-            return deleted_count
-            
         except Exception as e:
             print(f"Error during R2 cleanup: {e}")
             return 0
