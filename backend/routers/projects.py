@@ -151,6 +151,9 @@ async def delete_project(project_id: str, db: AsyncSession = Depends(get_db)):
             project = result.scalars().first()
         except Exception as e:
             print(f"Warning: Failed to load project with clips (likely schema mismatch): {e}")
+            # CRITICAL: Rollback the failed transaction so we can run the fallback query
+            await db.rollback()
+            
             # Fallback: Load project without clips
             result = await db.execute(
                 select(Project).where(Project.id == project_id)
