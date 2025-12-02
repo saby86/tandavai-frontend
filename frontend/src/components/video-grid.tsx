@@ -21,6 +21,8 @@ interface Clip {
     s3_url: string;
     virality_score: number | null;
     transcript: string | null;
+    start_time: number | null;
+    end_time: number | null;
     created_at: string;
 }
 

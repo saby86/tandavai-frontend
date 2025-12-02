@@ -42,6 +42,8 @@ class ClipResponse(BaseModel):
     s3_url: str
     virality_score: Optional[int] = None
     transcript: Optional[str] = None
+    start_time: Optional[float] = None
+    end_time: Optional[float] = None
     created_at: datetime
 
     class Config:
