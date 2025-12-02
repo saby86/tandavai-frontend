@@ -5,6 +5,7 @@ import { api, deleteProject, deleteOldProjects } from "@/lib/api";
 import { Loader2, Clock, AlertCircle, ChevronRight, Sparkles, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ClipCard } from "./clip-card";
+import { ThunderLoader } from "@/components/ui/thunder-loader";
 
 interface Project {
     id: string;
@@ -166,16 +167,29 @@ const ProjectSection = ({ project }: { project: Project }) => {
                 </div>
             )}
 
-            {project.status === "PROCESSING" && (
-                <div className="h-80 flex flex-col items-center justify-center text-center border border-dashed border-white/10 rounded-3xl bg-white/[0.02]">
-                    <div className="relative mb-6">
-                        <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full animate-pulse" />
-                        <Loader2 className="h-10 w-10 animate-spin text-blue-400 relative z-10" />
+            {(project.status === "PROCESSING" || project.status === "PENDING") && (
+                <div className="h-80 flex flex-col items-center justify-center text-center border border-dashed border-white/10 rounded-3xl bg-white/[0.02] relative overflow-hidden group">
+                    {/* Background Animation */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 animate-pulse" />
+
+                    <div className="relative z-10 flex flex-col items-center">
+                        <ThunderLoader className="scale-150 mb-8" />
+
+                        <h3 className="text-xl font-bold text-white mb-2">
+                            {project.status === "PENDING" ? "Waiting for GPU..." : "Forging Viral Clips..."}
+                        </h3>
+
+                        <p className="text-sm text-neutral-400 max-w-xs mx-auto mb-6">
+                            {project.status === "PENDING"
+                                ? "Your video is in the queue. Our AI engines are warming up."
+                                : "Analyzing viral moments, transcribing audio, and burning subtitles."}
+                        </p>
+
+                        {/* Progress Bar */}
+                        <div className="w-48 h-1.5 bg-white/10 rounded-full overflow-hidden relative">
+                            <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 via-blue-500 to-purple-500 w-full animate-[shimmer_2s_linear_infinite]" />
+                        </div>
                     </div>
-                    <p className="text-white font-semibold text-lg">AI is analyzing your video...</p>
-                    <p className="text-sm text-neutral-500 mt-2 max-w-xs">
-                        We are identifying the most viral moments. This usually takes 2-3 minutes.
-                    </p>
                 </div>
             )}
 
