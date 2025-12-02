@@ -18,6 +18,23 @@ class UserResponse(UserBase):
     class Config:
         from_attributes = True
 
+# Clip Schemas
+class ClipResponse(BaseModel):
+    id: UUID
+    project_id: UUID
+    s3_url: str
+    virality_score: Optional[int] = None
+    transcript: Optional[str] = None
+    start_time: Optional[float] = None
+    end_time: Optional[float] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class ClipUpdate(BaseModel):
+    transcript: Optional[str] = None
+
 # Project Schemas
 class ProjectCreate(BaseModel):
     source_url: str
@@ -35,23 +52,6 @@ class ProjectResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
-# Clip Schemas
-class ClipResponse(BaseModel):
-    id: UUID
-    project_id: UUID
-    s3_url: str
-    virality_score: Optional[int] = None
-    transcript: Optional[str] = None
-    start_time: Optional[float] = None
-    end_time: Optional[float] = None
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-class ClipUpdate(BaseModel):
-    transcript: Optional[str] = None
 
 # Upload Schemas
 class PresignedUrlResponse(BaseModel):
