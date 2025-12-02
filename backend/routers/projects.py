@@ -49,6 +49,10 @@ async def process_video(
     
     # For now, we just return the project. Task triggering will be uncommented when processor is ready.
     
+    # Explicitly set clips to empty list to prevent Pydantic from triggering an async lazy load
+    # which would fail or cause 500 error during serialization
+    new_project.clips = []
+    
     return new_project
 
 @router.get("/projects", response_model=list[ProjectResponse])
