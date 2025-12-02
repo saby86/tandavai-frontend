@@ -10,8 +10,8 @@ interface EditModalProps {
     clip: {
         id: string;
         transcript: string | null;
-        start_time?: number;
-        end_time?: number;
+        start_time?: number | null;
+        end_time?: number | null;
     };
 }
 
