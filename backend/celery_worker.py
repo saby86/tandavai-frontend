@@ -1,3 +1,5 @@
+from celery_app import celery_app
+
 def health_check_task():
     return {"status": "ok"}
 
