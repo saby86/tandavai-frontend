@@ -25,9 +25,11 @@ async def startup_event():
     # Simple migration to add error_message column if it doesn't exist
     async with engine.connect() as conn:
         try:
-            await conn.execute(text("ALTER TABLE projects ADD COLUMN error_message TEXT;"))
+            await conn.execute(text("ALTER TABLE projects ADD COLUMN IF NOT EXISTS error_message TEXT;"))
+            await conn.execute(text("ALTER TABLE clips ADD COLUMN IF NOT EXISTS start_time FLOAT;"))
+            await conn.execute(text("ALTER TABLE clips ADD COLUMN IF NOT EXISTS end_time FLOAT;"))
             await conn.commit()
-            print("Migration: Added error_message column to projects table.")
+            print("Migration: Verified schema columns (error_message, start_time, end_time).")
         except Exception as e:
             print(f"Migration: Column might already exist or error occurred: {e}")
 
@@ -46,7 +48,7 @@ async def global_exception_handler(request, exc):
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "environment": settings.ENVIRONMENT, "version": "v29-fix-worker-import"}
+    return {"status": "ok", "environment": settings.ENVIRONMENT, "version": "v30-auto-migrate"}
 
 @app.post("/admin/migrate")
 async def run_migration():

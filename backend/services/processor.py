@@ -131,6 +131,12 @@ async def process_video_logic(project_id: str):
             
             print(f"Error processing project {project_id}: {error_msg}")
             
+            # Rollback any failed transaction before trying to save the error status
+            try:
+                await db.rollback()
+            except Exception:
+                pass
+            
             project.status = ProjectStatus.FAILED.value
             project.error_message = error_msg
             try:
