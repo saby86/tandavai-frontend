@@ -57,10 +57,37 @@ async def list_projects(
     user_id: str = Depends(get_current_user)
 ):
     """
-    List all projects for the current user.
+    List all projects for the current user, including their clips.
     """
-    result = await db.execute(select(Project).where(Project.user_id == user_id).order_by(Project.created_at.desc()))
+    result = await db.execute(
+        select(Project)
+        .options(selectinload(Project.clips))
+        .where(Project.user_id == user_id)
+        .order_by(Project.created_at.desc())
+    )
     projects = result.scalars().all()
+    
+    # We need to ensure the clips have the correct presigned URLs
+    # This logic matches get_project_clips but applied to the list
+    from services.r2 import r2_service
+    
+    for project in projects:
+        if project.clips:
+            for clip in project.clips:
+                try:
+                    # Generate presigned URL for each clip
+                    # Reuse the logic: extract key from s3_url or stored key
+                    parts = clip.s3_url.split('/')
+                    if "clips" in parts:
+                        index = parts.index("clips")
+                        s3_key = "/".join(parts[index:])
+                    else:
+                        s3_key = parts[-1]
+                    
+                    clip.s3_url = r2_service.generate_presigned_get_url(s3_key, expiration=3600)
+                except Exception:
+                    pass
+
     return projects
 
 @router.get("/projects/{project_id}/clips", response_model=list[ClipResponse])

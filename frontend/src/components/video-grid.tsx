@@ -2,18 +2,11 @@
 import React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, deleteProject, deleteOldProjects } from "@/lib/api";
-import { Loader2, Clock, AlertCircle, ChevronRight, Sparkles, Trash2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Loader2, Sparkles, Trash2, AlertCircle } from "lucide-react";
 import { ClipCard } from "./clip-card";
 import { ThunderLoader } from "@/components/ui/thunder-loader";
-
-interface Project {
-    id: string;
-    status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
-    source_url: string;
-    created_at: string;
-    error_message?: string;
-}
+import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
+import { cn } from "@/lib/utils";
 
 interface Clip {
     id: string;
@@ -26,6 +19,15 @@ interface Clip {
     created_at: string;
 }
 
+interface Project {
+    id: string;
+    status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
+    source_url: string;
+    created_at: string;
+    error_message?: string;
+    clips: Clip[];
+}
+
 export const VideoGrid = () => {
     const queryClient = useQueryClient();
     const { data: projects, isLoading } = useQuery<Project[]>({
@@ -34,6 +36,7 @@ export const VideoGrid = () => {
             const res = await api.get("/projects");
             return res.data;
         },
+        refetchInterval: 5000, // Auto-refresh every 5s to check processing status
     });
 
     if (isLoading) {
@@ -48,7 +51,6 @@ export const VideoGrid = () => {
         return (
             <div className="text-center py-24 px-6 border border-white/5 rounded-[2rem] bg-[#0A0A0A] relative overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-
                 <div className="relative z-10 flex flex-col items-center">
                     <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 shadow-xl border border-white/5 group-hover:scale-110 transition-transform duration-500">
                         <Sparkles className="h-8 w-8 text-purple-400" />
@@ -62,187 +64,78 @@ export const VideoGrid = () => {
         );
     }
 
+    // Flatten Data:
+    // 1. Processing/Failed Projects -> Show as Cards
+    // 2. Completed Projects -> Extract Clips -> Show as Cards
+    const items: React.ReactNode[] = [];
+
+    projects.forEach((project) => {
+        if (project.status === "PROCESSING" || project.status === "PENDING") {
+            items.push(
+                <div key={project.id} className="row-span-1 md:col-span-1 rounded-3xl border border-white/10 bg-[#0A0A0A] overflow-hidden relative group h-[400px] flex flex-col items-center justify-center text-center p-6">
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 animate-pulse" />
+                    <div className="relative z-10">
+                        <ThunderLoader className="scale-125 mb-6" />
+                        <h3 className="text-lg font-bold text-white mb-2">
+                            {project.status === "PENDING" ? "Waiting for GPU..." : "Forging Viral Clips..."}
+                        </h3>
+                        <p className="text-xs text-neutral-400 max-w-[200px] mx-auto">
+                            Project {project.id.slice(0, 8)} is being processed.
+                        </p>
+                    </div>
+                </div>
+            );
+        } else if (project.status === "FAILED") {
+            items.push(
+                <div key={project.id} className="row-span-1 md:col-span-1 rounded-3xl border border-red-900/30 bg-red-900/5 overflow-hidden relative h-[200px] flex flex-col items-center justify-center text-center p-6">
+                    <AlertCircle className="h-8 w-8 text-red-500 mb-3" />
+                    <h3 className="text-sm font-bold text-red-400 mb-1">Processing Failed</h3>
+                    <p className="text-xs text-red-400/60 max-w-[200px] mx-auto break-words">
+                        {project.error_message || "Unknown error"}
+                    </p>
+                    <button
+                        onClick={() => deleteProject(project.id).then(() => queryClient.invalidateQueries({ queryKey: ["projects"] }))}
+                        className="mt-4 text-xs text-red-400 hover:text-red-300 underline"
+                    >
+                        Dismiss
+                    </button>
+                </div>
+            );
+        } else if (project.status === "COMPLETED" && project.clips) {
+            project.clips.forEach((clip, index) => {
+                items.push(
+                    <ClipCard key={clip.id} clip={clip} index={index} />
+                );
+            });
+        }
+    });
+
     return (
-        <div className="space-y-12">
+        <div className="space-y-8">
             {/* Header Actions */}
-            <div className="flex justify-end mb-4">
+            <div className="flex justify-between items-center px-4">
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                    <Sparkles className="w-6 h-6 text-purple-500" />
+                    Your Viral Feed
+                </h2>
                 <button
                     onClick={async () => {
                         if (confirm("Delete projects older than 7 days?")) {
-                            try {
-                                const res = await deleteOldProjects(7);
-                                alert(res.message);
-                                queryClient.invalidateQueries({ queryKey: ["projects"] });
-                            } catch (e: any) {
-                                console.error(e);
-                                alert(`Failed to cleanup: ${e.message || "Unknown error"}`);
-                            }
+                            await deleteOldProjects(7);
+                            queryClient.invalidateQueries({ queryKey: ["projects"] });
                         }
                     }}
                     className="text-xs text-neutral-500 hover:text-red-400 transition-colors flex items-center gap-1"
                 >
                     <Trash2 className="w-3 h-3" />
-                    Cleanup Old Projects (&gt;7 days)
+                    Cleanup
                 </button>
             </div>
 
-            {projects.map((project) => (
-                <ProjectSection key={project.id} project={project} />
-            ))}
-        </div>
-    );
-};
-
-const ProjectSection = ({ project }: { project: Project }) => {
-    const queryClient = useQueryClient();
-    const { data: clips, isLoading } = useQuery<Clip[]>({
-        queryKey: ["clips", project.id],
-        queryFn: async () => {
-            const res = await api.get(`/projects/${project.id}/clips`);
-            return res.data;
-        },
-        enabled: project.status === "COMPLETED",
-    });
-
-    const handleDelete = async () => {
-        if (confirm("Are you sure you want to delete this project? This cannot be undone.")) {
-            try {
-                await deleteProject(project.id);
-                queryClient.invalidateQueries({ queryKey: ["projects"] });
-            } catch (error: any) {
-                console.error("Failed to delete project:", error);
-                const attemptedUrl = error.config ? `${error.config.baseURL || ''}${error.config.url}` : 'unknown';
-
-                // Extract backend error message if available
-                let errorMessage = error.message;
-                if (error.response?.data?.detail) {
-                    errorMessage = error.response.data.detail;
-                } else if (error.response?.data?.message) {
-                    errorMessage = error.response.data.message;
-                }
-
-                alert(`Failed to delete project.\nURL: ${attemptedUrl}\nError: ${errorMessage}`);
-            }
-        }
-    };
-
-    return (
-        <div className="bg-[#0A0A0A] border border-white/5 rounded-[2rem] p-8 md:p-10 transition-all hover:border-white/10 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/5 blur-[100px] rounded-full pointer-events-none" />
-
-            <div className="flex items-center justify-between mb-10 relative z-10">
-                <div className="flex items-center gap-6">
-                    <StatusBadge status={project.status} />
-                    <div>
-                        <h3 className="text-xl font-bold text-white tracking-tight">
-                            Project {project.id.slice(0, 8)}
-                        </h3>
-                        <p className="text-sm text-neutral-500 font-medium mt-1 flex items-center gap-2">
-                            <Clock className="w-3 h-3" />
-                            {new Date(project.created_at).toLocaleDateString(undefined, {
-                                weekday: 'short',
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                                hour: 'numeric',
-                                minute: 'numeric'
-                            })}
-                        </p>
-                    </div>
-                </div>
-
-                <button
-                    onClick={handleDelete}
-                    className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/5 hover:bg-red-500/10 text-neutral-400 hover:text-red-400 transition-colors"
-                    title="Delete Project"
-                >
-                    <Trash2 className="w-4 h-4" />
-                    <span className="text-xs font-medium">Delete Project</span>
-                </button>
+            {/* Bento Grid of Clips & Status Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-auto">
+                {items}
             </div>
-
-            {project.status === "COMPLETED" && clips && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {clips.map((clip, index) => (
-                        <ClipCard key={clip.id} clip={clip} index={index} />
-                    ))}
-                </div>
-            )}
-
-            {(project.status === "PROCESSING" || project.status === "PENDING") && (
-                <div className="h-80 flex flex-col items-center justify-center text-center border border-dashed border-white/10 rounded-3xl bg-white/[0.02] relative overflow-hidden group">
-                    {/* Background Animation */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 animate-pulse" />
-
-                    <div className="relative z-10 flex flex-col items-center">
-                        <ThunderLoader className="scale-150 mb-8" />
-
-                        <h3 className="text-xl font-bold text-white mb-2">
-                            {project.status === "PENDING" ? "Waiting for GPU..." : "Forging Viral Clips..."}
-                        </h3>
-
-                        <p className="text-sm text-neutral-400 max-w-xs mx-auto mb-6">
-                            {project.status === "PENDING"
-                                ? "Your video is in the queue. Our AI engines are warming up."
-                                : "Analyzing viral moments, transcribing audio, and burning subtitles."}
-                        </p>
-
-                        {/* Progress Bar */}
-                        <div className="w-48 h-1.5 bg-white/10 rounded-full overflow-hidden relative">
-                            <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 via-blue-500 to-purple-500 w-full animate-[shimmer_2s_linear_infinite]" />
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {project.status === "FAILED" && (
-                <div className="h-40 flex flex-col items-center justify-center text-center border border-dashed border-red-900/30 rounded-3xl bg-red-900/5 p-4">
-                    <div className="flex items-center gap-3 text-red-400 mb-2">
-                        <AlertCircle className="h-6 w-6" />
-                        <span className="font-medium text-lg">Processing Failed</span>
-                    </div>
-                    {project.error_message && (
-                        <p className="text-xs text-red-400/70 max-w-xs break-words bg-black/20 p-2 rounded">
-                            {project.error_message}
-                        </p>
-                    )}
-                    {!project.error_message && (
-                        <p className="text-sm text-red-400/70">Please try again.</p>
-                    )}
-                </div>
-            )}
-        </div>
-    );
-};
-
-const StatusBadge = ({ status }: { status: string }) => {
-    const styles = {
-        COMPLETED: "bg-green-500/10 text-green-400 border-green-500/20",
-        PROCESSING: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-        PENDING: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
-        FAILED: "bg-red-500/10 text-red-400 border-red-500/20",
-    };
-
-    const labels = {
-        COMPLETED: "Completed",
-        PROCESSING: "Processing",
-        PENDING: "Queued",
-        FAILED: "Failed",
-    };
-
-    return (
-        <div className={cn(
-            "px-3 py-1 rounded-full text-xs font-medium border flex items-center gap-2",
-            styles[status as keyof typeof styles] || styles.PENDING
-        )}>
-            <div className={cn(
-                "w-1.5 h-1.5 rounded-full",
-                status === "PROCESSING" && "animate-pulse",
-                status === "COMPLETED" ? "bg-green-400" :
-                    status === "PROCESSING" ? "bg-blue-400" :
-                        status === "FAILED" ? "bg-red-400" : "bg-yellow-400"
-            )} />
-            {labels[status as keyof typeof labels] || status}
         </div>
     );
 };

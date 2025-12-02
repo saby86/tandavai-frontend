@@ -30,6 +30,7 @@ class ProjectResponse(BaseModel):
     source_url: str
     status: str
     error_message: Optional[str] = None
+    clips: List[ClipResponse] = []
     created_at: datetime
 
     class Config:

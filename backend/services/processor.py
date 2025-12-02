@@ -221,7 +221,10 @@ def burn_subtitles_task(clip_id: str, start_time: float = None, end_time: float 
                 )
                 
                 # 4. Upload back to R2
-                s3_key = f"clips/{project.id}/{clip.id}.mp4"
+                # Append timestamp to key to bust cache
+                import time
+                timestamp = int(time.time())
+                s3_key = f"clips/{project.id}/{clip.id}_{timestamp}.mp4"
                 
                 with open(local_output_path, "rb") as f:
                     await r2_service.upload_file(f, s3_key, "video/mp4")

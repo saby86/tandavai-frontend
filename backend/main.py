@@ -48,7 +48,7 @@ async def global_exception_handler(request, exc):
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "environment": settings.ENVIRONMENT, "version": "v31-deep-audit-fix"}
+    return {"status": "ok", "environment": settings.ENVIRONMENT, "version": "v32-ui-overhaul"}
 
 @app.post("/admin/migrate")
 async def run_migration():

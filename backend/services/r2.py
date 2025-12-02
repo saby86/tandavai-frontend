@@ -50,7 +50,8 @@ class R2Service:
                 'get_object',
                 Params={
                     'Bucket': self.bucket_name,
-                    'Key': s3_key
+                    'Key': s3_key,
+                    'ResponseContentDisposition': 'attachment'
                 },
                 ExpiresIn=expiration
             )
