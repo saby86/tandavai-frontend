@@ -30,12 +30,12 @@ export const createProject = async (sourceUrl: string, clipDuration: string = "a
     return response.data;
 };
 
-export const updateClip = async (clipId: string, data: { transcript?: string }) => {
+export const updateClip = async (clipId: string, data: { transcript?: string | null }) => {
     const response = await api.patch(`/clips/${clipId}`, data);
     return response.data;
 };
 
-export const burnClip = async (clipId: string, data: { start_time?: number; end_time?: number; style_name?: string }) => {
+export const burnClip = async (clipId: string, data: { start_time?: number | null; end_time?: number | null; style_name?: string }) => {
     const response = await api.post(`/clips/${clipId}/burn`, data);
     return response.data;
 };
