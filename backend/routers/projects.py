@@ -192,8 +192,16 @@ async def delete_project(project_id: str, db: AsyncSession = Depends(get_db)):
             print(f"Error collecting keys for deletion: {e}")
             # Continue to DB deletion even if key collection fails
 
-        # 3. Delete from DB (Immediate)
-        await db.delete(project)
+        # 3. Delete from DB
+        if is_corrupted:
+            # Bypass ORM cascade (which triggers load) and use direct SQL delete
+            # This relies on the DB-level ON DELETE CASCADE to clean up clips
+            from sqlalchemy import delete
+            await db.execute(delete(Project).where(Project.id == project_id))
+        else:
+            # Normal ORM delete (safe if schema is healthy)
+            await db.delete(project)
+            
         await db.commit()
         
         # 4. Trigger Background Deletion
