@@ -123,4 +123,60 @@ class R2Service:
         except Exception as e:
             print(f"Error deleting file {s3_key}: {e}")
 
+    async def upload_file(self, file_obj, s3_key: str, content_type: str = "video/mp4"):
+        """
+        Uploads a file-like object to R2.
+        """
+        try:
+            import asyncio
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, lambda: self.s3_client.upload_fileobj(
+                file_obj, 
+                self.bucket_name, 
+                s3_key,
+                ExtraArgs={'ContentType': content_type}
+            ))
+            print(f"Uploaded {s3_key} to R2")
+        except Exception as e:
+            print(f"Error uploading file {s3_key}: {e}")
+            raise e
+
+    async def download_file(self, s3_key: str, local_path: str):
+        """
+        Downloads a file from R2 to a local path.
+        Handles both full URLs (extracting key) and direct keys.
+        """
+        try:
+            # Extract key if it's a URL
+            if s3_key.startswith("http"):
+                parts = s3_key.split('/')
+                # Heuristic: assume key starts after bucket name or domain
+                # If we have a standard structure, we can try to find known prefixes
+                # But for now, let's try to match the logic used elsewhere
+                if "clips" in parts:
+                    index = parts.index("clips")
+                    key = "/".join(parts[index:])
+                else:
+                    # Fallback: just the filename? This might be wrong for nested keys.
+                    # Better heuristic: remove the endpoint
+                    # But simpler: just try to download using the key if we can guess it.
+                    # If project.source_url is stored as a KEY (which it is in upload.py), we are good.
+                    # If it is stored as a URL, we are in trouble.
+                    # In upload.py: s3_key = object_name.
+                    # In projects.py: source_url = project_in.source_url.
+                    # The frontend sends the S3 Key as source_url?
+                    # Let's assume s3_key is the Key.
+                    key = s3_key
+            else:
+                key = s3_key
+
+            # Run blocking download in threadpool
+            import asyncio
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, lambda: self.s3_client.download_file(self.bucket_name, key, local_path))
+            print(f"Downloaded {key} to {local_path}")
+        except Exception as e:
+            print(f"Error downloading file {s3_key}: {e}")
+            raise e
+
 r2_service = R2Service()

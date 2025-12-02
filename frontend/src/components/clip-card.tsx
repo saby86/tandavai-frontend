@@ -40,27 +40,16 @@ export const ClipCard = ({ clip, index }: ClipCardProps) => {
         }
     };
 
-    const handleDownload = async (e: React.MouseEvent) => {
+    const handleDownload = (e: React.MouseEvent) => {
         e.stopPropagation();
-        try {
-            setIsDownloading(true);
-            const response = await fetch(clip.s3_url);
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.style.display = "none";
-            a.href = url;
-            a.download = `tandav_clip_${index + 1}.mp4`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        } catch (error) {
-            console.error("Download failed:", error);
-            window.open(clip.s3_url, "_blank");
-        } finally {
-            setIsDownloading(false);
-        }
+        // Since the backend now provides a presigned URL with Content-Disposition: attachment,
+        // we can just trigger a navigation to it. This is more reliable than fetch+blob.
+        const a = document.createElement("a");
+        a.href = clip.s3_url;
+        a.download = `tandav_clip_${index + 1}.mp4`; // Fallback filename
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     };
 
     const copyLink = (e: React.MouseEvent) => {
