@@ -109,8 +109,16 @@ const ProjectSection = ({ project }: { project: Project }) => {
             } catch (error: any) {
                 console.error("Failed to delete project:", error);
                 const attemptedUrl = error.config ? `${error.config.baseURL || ''}${error.config.url}` : 'unknown';
-                const errorDetails = JSON.stringify(error.toJSON ? error.toJSON() : error, null, 2);
-                alert(`Failed to delete project.\nURL: ${attemptedUrl}\nDetails: ${errorDetails}`);
+
+                // Extract backend error message if available
+                let errorMessage = error.message;
+                if (error.response?.data?.detail) {
+                    errorMessage = error.response.data.detail;
+                } else if (error.response?.data?.message) {
+                    errorMessage = error.response.data.message;
+                }
+
+                alert(`Failed to delete project.\nURL: ${attemptedUrl}\nError: ${errorMessage}`);
             }
         }
     };
