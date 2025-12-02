@@ -143,6 +143,7 @@ async def delete_project(project_id: str, db: AsyncSession = Depends(get_db)):
         # 1. Fetch Project (Try with Clips first, fallback to just Project)
         from models import Clip
         project = None
+        is_corrupted = False
         
         try:
             result = await db.execute(
@@ -153,6 +154,7 @@ async def delete_project(project_id: str, db: AsyncSession = Depends(get_db)):
             print(f"Warning: Failed to load project with clips (likely schema mismatch): {e}")
             # CRITICAL: Rollback the failed transaction so we can run the fallback query
             await db.rollback()
+            is_corrupted = True
             
             # Fallback: Load project without clips
             result = await db.execute(
@@ -173,8 +175,8 @@ async def delete_project(project_id: str, db: AsyncSession = Depends(get_db)):
                     keys_to_delete.append(project.source_url)
 
             # Clip Keys
-            # Check if clips is populated (it should be due to selectinload)
-            if project.clips:
+            # Only attempt to access clips if not corrupted (to avoid triggering lazy-load error)
+            if not is_corrupted and project.clips:
                 for clip in project.clips:
                     try:
                         parts = clip.s3_url.split('/')
