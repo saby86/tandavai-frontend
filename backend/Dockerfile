@@ -3,17 +3,15 @@ FROM python:3.11-slim
 # Install system dependencies including FFmpeg
 RUN apt-get update && apt-get install -y \
     ffmpeg \
-    fonts-liberation \
-    fontconfig \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy requirements (relative to backend/ context)
+# Copy requirements from current directory (backend)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code (relative to backend/ context)
+# Copy application code from current directory (backend)
 COPY . .
 
 # Command to run the application
