@@ -7,6 +7,9 @@ RUN apt-get update && apt-get install -y \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
+# DEBUG: List files to verify context
+RUN ls -la
+
 # Copy requirements from backend directory
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
