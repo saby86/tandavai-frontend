@@ -5,6 +5,7 @@ WORKDIR /app
 # Install system dependencies (FFmpeg is critical)
 RUN apt-get update && apt-get install -y \
     ffmpeg \
+    fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
 # DEBUG: List files to verify context

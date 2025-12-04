@@ -50,3 +50,51 @@ async def update_clip(
     await db.refresh(clip)
     
     return clip
+
+@router.get("/clips/{clip_id}/download")
+async def download_clip(
+    clip_id: str,
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user)
+):
+    """
+    Generate a presigned download URL for a clip.
+    This ensures the browser treats it as a download (Content-Disposition: attachment).
+    """
+    # 1. Fetch clip
+    result = await db.execute(
+        select(Clip, Project)
+        .join(Project, Clip.project_id == Project.id)
+        .where(
+            Clip.id == clip_id,
+            Project.user_id == user_id
+        )
+    )
+    row = result.first()
+    
+    if not row:
+        raise HTTPException(status_code=404, detail="Clip not found")
+    
+    clip, project = row
+    
+    # 2. Extract S3 Key from URL
+    # URL format: https://.../clips/...
+    # We assume the key starts with "clips/"
+    try:
+        if "clips/" in clip.s3_url:
+            s3_key = clip.s3_url.split("clips/", 1)[1]
+            s3_key = f"clips/{s3_key}"
+        else:
+            # Fallback: try to guess from filename if it's a simple path
+            # This is risky but better than failing if URL format changed
+            s3_key = clip.s3_url.split("/")[-1]
+            s3_key = f"clips/{s3_key}"
+            
+        from services.r2 import r2_service
+        download_url = r2_service.generate_presigned_get_url(s3_key)
+        
+        return {"download_url": download_url}
+        
+    except Exception as e:
+        print(f"Error generating download URL: {e}")
+        raise HTTPException(status_code=500, detail="Could not generate download link")

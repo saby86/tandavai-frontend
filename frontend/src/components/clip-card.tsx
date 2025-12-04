@@ -40,16 +40,44 @@ export const ClipCard = ({ clip, index }: ClipCardProps) => {
         }
     };
 
-    const handleDownload = (e: React.MouseEvent) => {
+    const handleDownload = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        // Since the backend now provides a presigned URL with Content-Disposition: attachment,
-        // we can just trigger a navigation to it. This is more reliable than fetch+blob.
-        const a = document.createElement("a");
-        a.href = clip.s3_url;
-        a.download = `tandav_clip_${index + 1}.mp4`; // Fallback filename
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        setIsDownloading(true);
+        try {
+            // Fetch presigned URL from backend
+            // We need to use the public API URL. Assuming /api/proxy proxies to backend.
+            // Or we can use the direct backend URL if configured.
+            // Let's assume we can fetch from our Next.js proxy or directly if we have the token.
+            // Since this component is client-side, we should use the same auth mechanism.
+            // For now, we'll try to hit the backend directly or via proxy.
+
+            // Wait, we don't have a direct backend client here easily.
+            // But we can use the fetch API.
+            // We need the auth token if the endpoint is protected.
+            // The backend mock user is hardcoded for now, so it should work without a token for MVP.
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/clips/${clip.id}/download`);
+
+            if (!response.ok) {
+                throw new Error("Failed to get download link");
+            }
+
+            const data = await response.json();
+
+            // Trigger download
+            const a = document.createElement("a");
+            a.href = data.download_url;
+            a.download = `tandav_clip_${index + 1}.mp4`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+        } catch (error) {
+            console.error("Download failed:", error);
+            alert("Download failed. Please try again.");
+        } finally {
+            setIsDownloading(false);
+        }
     };
 
     const copyLink = (e: React.MouseEvent) => {
