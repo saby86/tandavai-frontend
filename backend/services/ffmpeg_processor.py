@@ -32,21 +32,38 @@ class FFmpegProcessor:
             stream = ffmpeg.filter(stream, 'crop', 'ih*(9/16)', 'ih', '(iw-ow)/2', 0)
             
             # Subtitle burning
+            temp_srt_path = None
             if srt_content:
-                import tempfile
-                # Create temp SRT file
-                with tempfile.NamedTemporaryFile(mode='w', suffix='.srt', delete=False, encoding='utf-8') as temp_srt:
-                    temp_srt.write(srt_content)
-                    temp_srt_path = temp_srt.name
+                import uuid
+                # Manually create temp file to avoid tempfile.NamedTemporaryFile issues
+                temp_srt_path = f"/tmp/{uuid.uuid4()}.srt"
                 
-                # Get Style String
-                style = self.get_style_string(style_name)
-                
-                # Note: Windows path separators can cause issues with FFmpeg filter strings. 
-                # We need to escape backslashes or use forward slashes.
-                temp_srt_path_escaped = temp_srt_path.replace('\\', '/').replace(':', '\\:')
-                
-                stream = ffmpeg.filter(stream, 'subtitles', temp_srt_path_escaped, force_style=style)
+                try:
+                    with open(temp_srt_path, "w", encoding="utf-8") as f:
+                        f.write(srt_content)
+                    
+                    # Verify file exists and has content
+                    if not os.path.exists(temp_srt_path):
+                        print(f"ERROR: SRT file was not created at {temp_srt_path}")
+                    else:
+                        print(f"Created SRT file at {temp_srt_path} (Size: {os.path.getsize(temp_srt_path)} bytes)")
+
+                    # Get Style String
+                    style = self.get_style_string(style_name)
+                    
+                    # Escape path for FFmpeg
+                    # On Linux/Docker, forward slashes are standard.
+                    # We just need to escape the colon if it was a Windows absolute path (C:), but in /tmp it's fine.
+                    # However, the filter string syntax might require escaping of the path itself if it contained special chars.
+                    # For a UUID path in /tmp, it is safe.
+                    temp_srt_path_escaped = temp_srt_path.replace('\\', '/').replace(':', '\\:')
+                    
+                    stream = ffmpeg.filter(stream, 'subtitles', temp_srt_path_escaped, force_style=style)
+                except Exception as e:
+                    print(f"Error creating SRT file: {e}")
+                    # If we can't create the SRT, we should probably fail or skip subtitles
+                    # For now, let's re-raise to see the error
+                    raise e
 
             # Output
             stream = ffmpeg.output(stream, output_path, vcodec='libx264', acodec='aac', strict='experimental')
@@ -56,7 +73,7 @@ class FFmpegProcessor:
             ffmpeg.run(stream, overwrite_output=True, capture_stdout=True, capture_stderr=True)
             
             # Cleanup temp SRT
-            if srt_content and 'temp_srt_path' in locals():
+            if temp_srt_path and os.path.exists(temp_srt_path):
                 try:
                     os.remove(temp_srt_path)
                 except:
